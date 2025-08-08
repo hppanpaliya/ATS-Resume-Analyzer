@@ -39,37 +39,27 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
   };
 
   return (
-    <div className="glass-strong rounded-3xl p-8 hover-lift transition-all duration-500 relative overflow-hidden">
-      {/* Animated background effect */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 animate-gradient-x"></div>
-      
-      <h2 className="text-2xl font-bold mb-8 flex items-center text-gray-800 dark:text-white">
-        <div className="relative mr-4">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur-md opacity-75 animate-pulse-slow"></div>
-          <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-xl">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
+    <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300">
+      <h2 className="text-2xl font-bold mb-6 flex items-center text-gray-800 dark:text-white">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-xl mr-3">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
         </div>
         Upload Resume
       </h2>
-      
       <div
-        className={`border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-500 relative overflow-hidden group ${
+        className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 ${
           dragActive 
-            ? 'dropzone-active border-purple-400 dark:border-purple-300 bg-gradient-to-br from-purple-50/30 to-blue-50/30 dark:from-purple-900/30 dark:to-blue-900/30' 
-            : 'border-gray-300/50 dark:border-gray-600/50 hover:border-purple-400/70 dark:hover:border-purple-300/70 glass backdrop-blur-xl'
+            ? 'dropzone-active border-purple-400 dark:border-purple-300 bg-purple-50/20 dark:bg-purple-900/20' 
+            : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-300 glass'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        {/* Animated border effect */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 opacity-0 group-hover:opacity-20 transition-opacity duration-500 animate-gradient-x"></div>
-        
         <input
           type="file"
           id="resume-upload"
@@ -77,63 +67,51 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
           accept=".pdf,.docx"
           onChange={handleFileInput}
         />
-        
-        <label htmlFor="resume-upload" className="cursor-pointer relative z-10">
-          <div className="relative mb-8">
-            <div className="relative group">
-              {/* Glowing orb behind icon */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity duration-500 blur-xl scale-150"></div>
-              
-              <svg className="w-20 h-20 mx-auto text-purple-400 dark:text-purple-300 transition-all duration-500 hover:scale-110 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        <label htmlFor="resume-upload" className="cursor-pointer">
+          <div className="relative">
+            <svg className="w-16 h-16 mx-auto mb-6 text-purple-400 dark:text-purple-300 transition-transform duration-300 hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
               </svg>
-              
-              {/* Plus icon overlay */}
-              <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
             </div>
           </div>
-          
-          <h3 className="text-2xl font-bold neon-text mb-4">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">
             Drop your resume here
           </h3>
-          
-          <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg font-light">
+          <p className="text-gray-600 dark:text-gray-300 mb-4 text-lg">
             or click to browse your files
           </p>
-          
-          <div className="flex justify-center space-x-4 mb-6">
-            <span className="glass px-5 py-2 rounded-full text-blue-600 dark:text-blue-400 text-sm font-semibold border border-blue-200/50 dark:border-blue-700/50 hover-glow transition-all duration-300">
+          <div className="flex justify-center space-x-4 mb-4">
+            <span className="keyword-badge px-4 py-2 bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
               PDF
             </span>
-            <span className="glass px-5 py-2 rounded-full text-green-600 dark:text-green-400 text-sm font-semibold border border-green-200/50 dark:border-green-700/50 hover-glow transition-all duration-300">
+            <span className="keyword-badge px-4 py-2 bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
               DOCX
             </span>
           </div>
-          
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
-            Maximum file size: 10MB • Secure upload
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Maximum file size: 10MB
           </p>
         </label>
         
         {selectedFile && (
-          <div className="mt-8 card-enter">
-            <div className="glass-strong rounded-2xl p-6 inline-flex items-center space-x-4 max-w-sm hover-glow">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mt-6 slide-up">
+            <div className="glass-strong rounded-2xl p-4 inline-flex items-center space-x-3 max-w-xs">
+              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Ready to analyze
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             </div>

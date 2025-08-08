@@ -47,68 +47,51 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen futuristic-bg paper-texture relative overflow-hidden">
-      {/* Floating Orbs for Futuristic Effect */}
-      <div className="floating-orbs">
-        <div className="floating-orb orb-1"></div>
-        <div className="floating-orb orb-2"></div>
-        <div className="floating-orb orb-3"></div>
+    <div className="min-h-screen animated-bg paper-texture relative overflow-hidden">
+      {/* Floating geometric shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Theme Toggle */}
       <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 pt-20 sm:pt-24 relative z-10 page-transition">
-        {/* Hero Header */}
-        <div className="text-center mb-16">
-          <div className="glass-strong rounded-[2rem] p-8 sm:p-12 mx-auto max-w-5xl hover-lift transition-all duration-500">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 rounded-2xl blur-md opacity-75 animate-pulse-slow"></div>
-                <div className="relative bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 p-4 rounded-2xl">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
+      
+      <div className="container mx-auto px-4 py-8 relative z-10 fade-in">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="glass-strong rounded-3xl p-8 mx-auto max-w-4xl hover-glass">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-2xl mr-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                ATS Resume Analyzer
+              </h1>
             </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 neon-text leading-tight">
-              ATS Resume Analyzer
-            </h1>
-            
-            <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light mb-8 max-w-3xl mx-auto leading-relaxed px-4">
-              Unlock your career potential with AI-powered resume analysis that reveals hidden insights and optimization opportunities
+            <p className="text-xl text-gray-600 dark:text-gray-300 font-light">
+              Get AI-powered insights on how well your resume matches the job description
             </p>
-            
-            <div className="flex flex-wrap justify-center gap-4">
-              <div className="glass px-6 py-3 rounded-full hover-glow transition-all duration-300">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">AI-Powered Analysis</span>
-                </div>
+            <div className="mt-6 flex justify-center space-x-4">
+              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-300">AI-Powered Analysis</span>
               </div>
-              <div className="glass px-6 py-3 rounded-full hover-glow transition-all duration-300">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Instant Results</span>
-                </div>
-              </div>
-              <div className="glass px-6 py-3 rounded-full hover-glow transition-all duration-300">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Actionable Insights</span>
-                </div>
+              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-500"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-300">Instant Results</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Application Grid */}
+        {/* Main Content */}
         <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Input Column */}
-          <div className="space-y-8 card-enter">
+          <div className="space-y-8 slide-up">
             <FileUpload 
               onFileSelect={handleFileSelect}
               onFileError={handleFileError}
@@ -120,27 +103,22 @@ function App() {
               onChange={setJobDescription}
             />
 
-            {/* Enhanced Analyze Button */}
+            {/* Analyze Button */}
             <button
               onClick={handleAnalyze}
               disabled={!resumeFile || !jobDescription || isLoading}
-              className={`w-full py-6 px-8 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden group ${
+              className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
                 !resumeFile || !jobDescription || isLoading
-                  ? 'bg-gray-400/30 text-gray-500 cursor-not-allowed backdrop-blur-md border border-gray-300/20'
-                  : 'btn-futuristic text-white shadow-2xl hover:shadow-purple-500/25'
+                  ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed backdrop-blur-md'
+                  : 'btn-glass text-white shadow-lg hover:shadow-2xl'
               }`}
             >
-              {!isLoading && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              )}
-              
               {isLoading ? (
-                <div className="flex items-center justify-center space-x-3">
+                <div className="flex items-center justify-center">
                   <LoadingSpinner />
-                  <span>Analyzing Resume...</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center space-x-3 relative z-10">
+                <div className="flex items-center justify-center space-x-3">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                       d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -154,26 +132,16 @@ function App() {
           </div>
 
           {/* Results Column */}
-          <div className="space-y-8 card-enter" style={{ animationDelay: '0.3s' }}>
+          <div className="space-y-8 slide-up" style={{ animationDelay: '0.2s' }}>
             <AnalysisResults results={analysisResult} />
           </div>
         </div>
 
-        {/* Enhanced Footer */}
-        <div className="mt-20 text-center">
-          <div className="glass rounded-3xl p-8 mx-auto max-w-3xl hover-glow">
-            <div className="flex items-center justify-center mb-4">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-            </div>
-            <p className="text-lg text-gray-600 dark:text-gray-300 font-light">
+        {/* Footer */}
+        <div className="mt-16 text-center">
+          <div className="glass rounded-2xl p-6 mx-auto max-w-2xl">
+            <p className="text-gray-600 dark:text-gray-300 font-light">
               Powered by advanced AI algorithms to help you land your dream job
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Built with modern glassmorphism design and futuristic aesthetics
             </p>
           </div>
         </div>
