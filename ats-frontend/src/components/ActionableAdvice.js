@@ -115,7 +115,7 @@ const ActionableAdvice = ({ advice }) => {
                         <span className="text-2xl">{getAdviceIcon(idx)}</span>
                         <div className="flex-1">
                           <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${
-                            isCompleted ? 'line-through text-gray-500 dark:text-gray-500' : ''
+                            isCompleted ? 'line-through text-gray-500 dark:text-gray-200' : ''
                           }`}>
                             {item}
                           </p>
