@@ -83,13 +83,16 @@ async function fetchModelsFromOpenRouter() {
                 // Mark recommended models (you can customize this logic)
                 recommended: model.id === DEFAULT_MODEL || 
                             model.id.includes('gemini') || 
-                            model.id.includes('llama-3')
+                            model.id.includes('llama-3') ||
+                            model.id.includes('deepseek') ||
+                            model.id.includes('openai') ||
+                            model.id.includes('anthropic')
             }))
             .sort((a, b) => {
-                // Sort by recommended first, then by name
-                if (a.recommended && !b.recommended) return -1;
-                if (!a.recommended && b.recommended) return 1;
-                return a.name.localeCompare(b.name);
+                // Sort by created date in descending order by default (newest first)
+                const dateA = a.created || 0;
+                const dateB = b.created || 0;
+                return dateB - dateA;
             });
 
         console.log(`Successfully fetched ${freeModels.length} free models from OpenRouter`);
