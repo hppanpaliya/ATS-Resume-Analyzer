@@ -4,11 +4,34 @@ const FormattingScore = ({ formatting }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedScore(formatting.score);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [formatting.score]);
+    if (formatting && formatting.score) {
+      const timer = setTimeout(() => {
+        setAnimatedScore(formatting.score);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [formatting]);
+
+  // Handle case where formatting data is not available
+  if (!formatting || !formatting.score) {
+    return (
+      <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300 slide-up">
+        <div className="text-center py-8">
+          <div className="text-gray-500 dark:text-gray-400 mb-4">
+            <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            ATS Formatting Analysis
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Formatting analysis data is not available yet.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'from-green-400 to-emerald-500';

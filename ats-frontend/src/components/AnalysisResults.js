@@ -50,28 +50,28 @@ const AnalysisResults = ({ results }) => {
         <div className="mt-8 grid grid-cols-3 gap-4">
           <div className="text-center p-4 glass rounded-2xl">
             <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
-              {results.keywordAnalysis?.foundKeywords?.length || 0}
+              {results.keywordMatch?.matchedKeywords?.length || 0}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Keywords Found</div>
           </div>
           <div className="text-center p-4 glass rounded-2xl">
             <div className="text-2xl font-bold text-purple-500 dark:text-purple-400">
-              {results.atsFormattingScore?.score || 0}%
+              {results.formattingScore?.score || 0}%
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">ATS Friendly</div>
           </div>
           <div className="text-center p-4 glass rounded-2xl">
             <div className="text-2xl font-bold text-green-500 dark:text-green-400">
-              {results.experienceRelevance?.details?.filter(d => d.matchStrength === 'Strong').length || 0}
+              {results.experienceRelevance?.score || 0}%
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Strong Matches</div>
           </div>
         </div>
       </div>
 
-      <KeywordAnalysis analysis={results.keywordAnalysis} />
+      <KeywordAnalysis analysis={results.keywordMatch} />
       <ExperienceRelevance relevance={results.experienceRelevance} />
-      <FormattingScore formatting={results.atsFormattingScore} />
+      <FormattingScore formatting={results.formattingScore} />
       <ActionableAdvice advice={results.actionableAdvice} />
     </>
   );

@@ -5,7 +5,7 @@ const KeywordAnalysis = ({ analysis }) => {
 
   if (!analysis) return null;
 
-  const foundCount = analysis.foundKeywords?.length || 0;
+  const foundCount = analysis.matchedKeywords?.length || 0;
   const missingCount = analysis.missingKeywords?.length || 0;
   const totalCount = foundCount + missingCount;
 
@@ -66,7 +66,7 @@ const KeywordAnalysis = ({ analysis }) => {
                   Great! Your resume contains these important keywords:
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {analysis.foundKeywords.map((keyword, idx) => (
+                  {analysis.matchedKeywords.map((keyword, idx) => (
                     <span 
                       key={idx} 
                       className="keyword-badge px-4 py-2 bg-gradient-to-r from-green-100/80 to-emerald-100/80 dark:from-green-900/40 dark:to-emerald-900/40 text-green-700 dark:text-green-300 rounded-full text-sm font-medium border border-green-200/50 dark:border-green-700/50 hover:scale-105 transition-all duration-200"

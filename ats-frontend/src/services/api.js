@@ -99,7 +99,7 @@ export const analyzeResume = async (resumeFile, jobDescription, selectedModel = 
       },
       timeout: 60000 // 60 seconds for analysis
     });
-    return response.data;
+    return response.data.data; // Extract the actual data from the success response
   } catch (error) {
     throw error; // Re-throw to be handled by interceptor
   }
@@ -109,7 +109,7 @@ export const analyzeResume = async (resumeFile, jobDescription, selectedModel = 
 export const getAvailableModels = async () => {
   try {
     const response = await apiClient.get('/api/models');
-    return response.data;
+    return response.data.data; // Extract the data from the success response
   } catch (error) {
     console.error('Failed to fetch models:', error);
     throw new Error(`Failed to load AI models: ${error.message}`);

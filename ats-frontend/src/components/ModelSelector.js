@@ -6,7 +6,6 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [cacheInfo, setCacheInfo] = useState(null);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,18 +30,17 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
     setError('');
     
     try {
-      const response = await getAvailableModels();
+      const models = await getAvailableModels();
       // Sort by created date (desc) by default
-      const sortedModels = (response.models || []).sort((a, b) => {
+      const sortedModels = (models || []).sort((a, b) => {
         return new Date(b.created * 1000) - new Date(a.created * 1000);
       });
       
       setModels(sortedModels);
-      setCacheInfo(response.cacheInfo);
       
       // Set default model if none selected and models are available
       if (!selectedModel && sortedModels.length > 0) {
-        const defaultModel = sortedModels.find(m => m.id === response.default) || sortedModels[0];
+        const defaultModel = sortedModels.find(m => m.id === DEFAULT_MODEL) || sortedModels[0];
         onModelSelect(defaultModel.id);
       }
     } catch (err) {
@@ -470,29 +468,6 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
               );
             })
           )}
-        </div>
-      )}
-
-      {/* Cache Info */}
-      {cacheInfo && (
-        <div className="mt-4 p-3 glass rounded-2xl">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <svg className="w-3 h-3 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs text-gray-600 dark:text-gray-300">
-                <strong>Models loaded from OpenRouter:</strong> {models.length} free models available.
-                {cacheInfo.lastFetched && (
-                  <span className="block mt-1">
-                    Last updated: {new Date(cacheInfo.lastFetched).toLocaleTimeString()}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
         </div>
       )}
     </div>

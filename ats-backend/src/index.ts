@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
+import resumeRoutes from './routes/resume.routes';
+import aiRoutes from './routes/ai.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 
 dotenv.config();
@@ -14,6 +16,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/resumes', resumeRoutes);
+app.use('/api', aiRoutes);
 
 // Protected route example
 app.get('/api/protected', authMiddleware, (req, res) => {

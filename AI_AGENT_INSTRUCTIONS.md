@@ -51,7 +51,9 @@
 - ✅ JWT token management with refresh
 - ✅ Protected routes and auth state
 - ✅ Database persistence (9 models)
+- ✅ Resume CRUD operations (backend)
 - ✅ ATS Resume Analysis (file upload, AI analysis, results display)
+- ✅ AI model fetching and selection
 - ✅ File upload (PDF/DOCX)
 - ✅ Text extraction from resumes
 - ✅ AI-powered analysis (basic)
@@ -1649,11 +1651,11 @@ PHASE 1: FOUNDATION
 └─ Status: COMPLETE
 
 PHASE 2: RESUME MANAGEMENT
-├─ [⬜] Feature 2.1: Resume Model & CRUD Backend
+├─ [✅] Feature 2.1: Resume Model & CRUD Backend
 ├─ [⬜] Feature 2.2: Dashboard Frontend
 ├─ [⬜] Feature 2.3: Resume Builder (TODO: Not documented yet)
 ├─ [⬜] Feature 2.4: Template System (TODO: Not documented yet)
-└─ Status: READY TO START
+└─ Status: IN PROGRESS
 
 PHASE 3: AI FEATURES
 ├─ [⬜] Feature 3.1: Multi-AI Provider Setup
