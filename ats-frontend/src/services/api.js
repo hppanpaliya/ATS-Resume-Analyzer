@@ -1,4 +1,5 @@
 import axios from 'axios';
+import useAuthStore from '../stores/authStore';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -11,9 +12,13 @@ const apiClient = axios.create({
   }
 });
 
-// Request interceptor for logging
+// Request interceptor - add token
 apiClient.interceptors.request.use(
   (config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -23,19 +28,46 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor - handle token refresh
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = useAuthStore.getState().refreshToken;
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          refreshToken,
+        });
+
+        const { accessToken } = response.data.data;
+        useAuthStore.getState().setAuth(
+          useAuthStore.getState().user,
+          accessToken,
+          refreshToken
+        );
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        useAuthStore.getState().clearAuth();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+
     console.error('API Response Error:', error);
-    
+
     // Handle common error cases
     if (error.code === 'ECONNABORTED') {
       throw new Error('Request timeout. Please check your connection and try again.');
     }
-    
+
     if (error.response) {
       // Server responded with error status
       const message = error.response.data?.error || error.response.data?.message || 'Server error occurred';
@@ -163,4 +195,7 @@ export const formatModelName = (modelId) => {
   
   return modelId;
 };
+
+// Export the axios instance as default for auth service
+export default apiClient;
 

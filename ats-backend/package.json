@@ -1,10 +1,12 @@
 {
   "name": "ats-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "dev:watch": "nodemon --exec ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -13,16 +15,23 @@
   "dependencies": {
     "@prisma/client": "^6.17.0",
     "axios": "^1.11.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^4.19.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.10.0",
     "multer": "^2.0.2",
     "openai": "^5.12.1",
     "pdf-parse": "^1.1.1",
-    "prisma": "^6.17.0"
+    "prisma": "^6.17.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.7.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
