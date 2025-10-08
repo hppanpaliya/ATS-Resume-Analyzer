@@ -42,7 +42,7 @@ const SettingsPanel = ({
           />
           
           {/* Settings Panel */}
-          <div className="fixed top-6 right-6 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
+          <div className="fixed top-20 right-20 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
             <div className="glass-strong rounded-3xl p-6 border border-white/25 shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
@@ -138,14 +138,6 @@ const SettingsPanel = ({
                       </div>
                     </div>
                   </button>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>ATS Resume Analyzer</span>
-                  <span>v1.0.0</span>
                 </div>
               </div>
             </div>

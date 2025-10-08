@@ -1,0 +1,345 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// MODELS
+// ========================================
+
+model User {
+  id                    String    @id @default(uuid()) @db.Uuid
+
+  // Authentication
+  email                 String    @unique @db.VarChar(255)
+  emailVerified         Boolean   @default(false) @map("email_verified")
+  passwordHash          String    @map("password_hash") @db.VarChar(255)
+
+  // Profile
+  firstName             String?   @map("first_name") @db.VarChar(100)
+  lastName              String?   @map("last_name") @db.VarChar(100)
+  phone                 String?   @db.VarChar(20)
+  profilePictureUrl     String?   @map("profile_picture_url")
+
+  // Subscription
+  subscriptionTier      String    @default("free") @map("subscription_tier") @db.VarChar(20)
+  subscriptionStartDate DateTime? @map("subscription_start_date")
+  subscriptionEndDate   DateTime? @map("subscription_end_date")
+
+  // Usage Tracking
+  resumesCreated        Int       @default(0) @map("resumes_created")
+  analysesRunToday      Int       @default(0) @map("analyses_run_today")
+  lastAnalysisDate      DateTime? @map("last_analysis_date") @db.Date
+
+  // AI Usage Limits
+  aiGenerationsToday    Int       @default(0) @map("ai_generations_today")
+  aiOptimizationsToday  Int       @default(0) @map("ai_optimizations_today")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  lastLoginAt           DateTime? @map("last_login_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  // Settings
+  settings              Json      @default("{\"theme\": \"light\", \"notifications\": true}")
+
+  // Relations
+  resumes               Resume[]
+  jobDescriptions       JobDescription[]
+  analyses              Analysis[]
+  aiUsage               AiUsage[]
+  subscription          Subscription?
+  auditLogs             AuditLog[]
+
+  @@index([email])
+  @@index([subscriptionTier])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Resume {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+
+  // Resume Info
+  title                 String    @db.VarChar(255)
+  templateId            String?   @map("template_id") @db.Uuid
+
+  // Content
+  content               Json
+  extractedText         String?   @map("extracted_text")
+
+  // Status
+  status                String    @default("draft") @db.VarChar(20)
+  isPublic              Boolean   @default(false) @map("is_public")
+
+  // AI Enhancement
+  aiOptimizedForJdId    String?   @map("ai_optimized_for_jd_id") @db.Uuid
+  optimizationScore     Int?      @map("optimization_score")
+
+  // Files
+  originalFileUrl       String?   @map("original_file_url")
+  exportedPdfUrl        String?   @map("exported_pdf_url")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  lastAccessedAt        DateTime? @map("last_accessed_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  // Version
+  version               Int       @default(1)
+  parentResumeId        String?   @map("parent_resume_id") @db.Uuid
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template              Template? @relation(fields: [templateId], references: [id])
+  jobDescription        JobDescription? @relation(fields: [aiOptimizedForJdId], references: [id])
+  parentResume          Resume?   @relation("ResumeVariants", fields: [parentResumeId], references: [id])
+  childResumes          Resume[]  @relation("ResumeVariants")
+  versions              ResumeVersion[]
+  analyses              Analysis[]
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([updatedAt(sort: Desc)])
+  @@map("resumes")
+}
+
+model ResumeVersion {
+  id                    String    @id @default(uuid()) @db.Uuid
+  resumeId              String    @map("resume_id") @db.Uuid
+
+  // Version Info
+  versionNumber         Int       @map("version_number")
+  content               Json
+
+  // Change Tracking
+  changeSummary         String?   @map("change_summary")
+  changedByUserId       String?   @map("changed_by_user_id") @db.Uuid
+  changeType            String?   @map("change_type") @db.VarChar(20)
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, versionNumber])
+  @@index([resumeId])
+  @@index([createdAt(sort: Desc)])
+  @@map("resume_versions")
+}
+
+model Template {
+  id                    String    @id @default(uuid()) @db.Uuid
+
+  // Template Info
+  name                  String    @unique @db.VarChar(100)
+  description           String?
+  category              String?   @db.VarChar(50)
+
+  // Design
+  design                Json
+
+  // Preview
+  previewImageUrl       String?   @map("preview_image_url")
+  demoResumeId          String?   @map("demo_resume_id") @db.Uuid
+
+  // Status
+  isActive              Boolean   @default(true) @map("is_active")
+  isPremium             Boolean   @default(false) @map("is_premium")
+  atsScore              Int?      @map("ats_score")
+
+  // Usage
+  usageCount            Int       @default(0) @map("usage_count")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  resumes               Resume[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([usageCount(sort: Desc)])
+  @@map("templates")
+}
+
+model JobDescription {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+
+  // Job Info
+  title                 String    @db.VarChar(255)
+  company               String?   @db.VarChar(255)
+  location              String?   @db.VarChar(255)
+
+  // Content
+  description           String
+  extractedData         Json?     @map("extracted_data")
+
+  // Source
+  sourceUrl             String?   @map("source_url")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses              Analysis[]
+  optimizedResumes      Resume[]
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("job_descriptions")
+}
+
+model Analysis {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  resumeId              String    @map("resume_id") @db.Uuid
+  jobDescriptionId      String?   @map("job_description_id") @db.Uuid
+
+  // Analysis Type
+  analysisType          String    @map("analysis_type") @db.VarChar(50)
+
+  // AI Provider
+  aiProvider            String?   @map("ai_provider") @db.VarChar(50)
+  modelUsed             String?   @map("model_used") @db.VarChar(100)
+
+  // Results
+  results               Json
+
+  // Performance
+  processingTimeMs      Int?      @map("processing_time_ms")
+  tokensUsed            Int?      @map("tokens_used")
+  estimatedCost         Decimal?  @map("estimated_cost") @db.Decimal(10, 6)
+
+  // Status
+  status                String    @default("pending") @db.VarChar(20)
+  errorMessage          String?   @map("error_message")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  completedAt           DateTime? @map("completed_at")
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobDescription        JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+  @@map("analyses")
+}
+
+model AiUsage {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+
+  // Request Info
+  feature               String    @db.VarChar(50)
+  aiProvider            String    @map("ai_provider") @db.VarChar(50)
+  model                 String?   @db.VarChar(100)
+
+  // Usage Metrics
+  tokensUsed            Int?      @map("tokens_used")
+  estimatedCost         Decimal?  @map("estimated_cost") @db.Decimal(10, 6)
+
+  // Summaries
+  requestSummary        String?   @map("request_summary")
+  responseSummary       String?   @map("response_summary")
+
+  // Performance
+  responseTimeMs        Int?      @map("response_time_ms")
+  wasCached             Boolean   @default(false) @map("was_cached")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  date                  DateTime  @default(now()) @db.Date
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([feature])
+  @@map("ai_usage")
+}
+
+model Subscription {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @unique @map("user_id") @db.Uuid
+
+  // Subscription Info
+  tier                  String    @db.VarChar(20)
+  status                String    @default("active") @db.VarChar(20)
+
+  // Billing
+  stripeCustomerId      String?   @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId  String?   @map("stripe_subscription_id") @db.VarChar(255)
+
+  // Dates
+  startDate             DateTime  @map("start_date")
+  endDate               DateTime? @map("end_date")
+  trialEndDate          DateTime? @map("trial_end_date")
+  cancelledAt           DateTime? @map("cancelled_at")
+
+  // Custom Limits
+  customLimits          Json?     @map("custom_limits")
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@map("subscriptions")
+}
+
+model AuditLog {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String?   @map("user_id") @db.Uuid
+
+  // Action Info
+  action                String    @db.VarChar(100)
+  entityType            String?   @map("entity_type") @db.VarChar(50)
+  entityId              String?   @map("entity_id") @db.Uuid
+
+  // Request Details
+  ipAddress             String?   @map("ip_address") @db.Inet
+  userAgent             String?   @map("user_agent")
+
+  // Changes
+  changes               Json?
+
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
