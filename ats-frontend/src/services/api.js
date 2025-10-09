@@ -167,7 +167,7 @@ export const createResume = async (title, content, templateId) => {
 
 export const updateResume = async (resumeId, updates) => {
   try {
-    const response = await apiClient.put(`/api/resumes/${resumeId}`, updates);
+    const response = await apiClient.patch(`/api/resumes/${resumeId}`, updates);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update resume:', error);

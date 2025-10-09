@@ -19,6 +19,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api', aiRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'ATS Resume Analyzer API',
+    version: '1.0.0'
+  });
+});
+
 // Protected route example
 app.get('/api/protected', authMiddleware, (req, res) => {
   res.json({ message: 'This is a protected route', userId: (req as any).userId });

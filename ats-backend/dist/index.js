@@ -19,6 +19,15 @@ app.use(express_1.default.json());
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/resumes', resume_routes_1.default);
 app.use('/api', ai_routes_1.default);
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        service: 'ATS Resume Analyzer API',
+        version: '1.0.0'
+    });
+});
 // Protected route example
 app.get('/api/protected', auth_middleware_1.authMiddleware, (req, res) => {
     res.json({ message: 'This is a protected route', userId: req.userId });

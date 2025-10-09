@@ -38,8 +38,7 @@ class AIService {
         }
         modelCache.isLoading = true;
         try {
-            const response = await axios_1.default.get('https://openrouter.ai/api/v1/models', {
-            });
+            const response = await axios_1.default.get('https://openrouter.ai/api/v1/models');
             // Filter and format models
             const models = response.data.data
                 .filter((model) => model.id.includes('free') || model.pricing?.prompt === '0')

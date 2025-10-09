@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ========================================
@@ -14,41 +14,39 @@ datasource db {
 // ========================================
 
 model User {
-  id                    String    @id @default(uuid()) @db.Uuid
+  id                    String    @id @default(uuid())
 
   // Authentication
-  email                 String    @unique @db.VarChar(255)
-  emailVerified         Boolean   @default(false) @map("email_verified")
-  passwordHash          String    @map("password_hash") @db.VarChar(255)
+  email                 String    @unique
+  emailVerified         Boolean   @default(false)
+  passwordHash          String
 
   // Profile
-  firstName             String?   @map("first_name") @db.VarChar(100)
-  lastName              String?   @map("last_name") @db.VarChar(100)
-  phone                 String?   @db.VarChar(20)
-  profilePictureUrl     String?   @map("profile_picture_url")
+  firstName             String?
+  lastName              String?
+  phone                 String?
+  profilePictureUrl     String?
 
   // Subscription
-  subscriptionTier      String    @default("free") @map("subscription_tier") @db.VarChar(20)
-  subscriptionStartDate DateTime? @map("subscription_start_date")
-  subscriptionEndDate   DateTime? @map("subscription_end_date")
+  subscriptionTier      String    @default("free")
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
 
   // Usage Tracking
-  resumesCreated        Int       @default(0) @map("resumes_created")
-  analysesRunToday      Int       @default(0) @map("analyses_run_today")
-  lastAnalysisDate      DateTime? @map("last_analysis_date") @db.Date
-
-  // AI Usage Limits
-  aiGenerationsToday    Int       @default(0) @map("ai_generations_today")
-  aiOptimizationsToday  Int       @default(0) @map("ai_optimizations_today")
+  resumesCreated        Int       @default(0)
+  analysesRunToday      Int       @default(0)
+  lastAnalysisDate      DateTime?
+  aiGenerationsToday    Int       @default(0)
+  aiOptimizationsToday  Int       @default(0)
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  lastLoginAt           DateTime? @map("last_login_at")
-  deletedAt             DateTime? @map("deleted_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastLoginAt           DateTime?
+  deletedAt             DateTime?
 
   // Settings
-  settings              Json      @default("{\"theme\": \"light\", \"notifications\": true}")
+  settings              String    @default("{}")
 
   // Relations
   resumes               Resume[]
@@ -58,288 +56,260 @@ model User {
   subscription          Subscription?
   auditLogs             AuditLog[]
 
-  @@index([email])
-  @@index([subscriptionTier])
-  @@index([createdAt])
   @@map("users")
 }
 
 model Resume {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String
 
   // Resume Info
-  title                 String    @db.VarChar(255)
-  templateId            String?   @map("template_id") @db.Uuid
+  title                 String
+  templateId            String?
 
   // Content
-  content               Json
-  extractedText         String?   @map("extracted_text")
+  content               String
+  extractedText         String?
 
   // Status
-  status                String    @default("draft") @db.VarChar(20)
-  isPublic              Boolean   @default(false) @map("is_public")
+  status                String    @default("draft")
+  isPublic              Boolean   @default(false)
 
   // AI Enhancement
-  aiOptimizedForJdId    String?   @map("ai_optimized_for_jd_id") @db.Uuid
-  optimizationScore     Int?      @map("optimization_score")
+  aiOptimizedForJdId    String?
+  optimizationScore     Int?
 
   // Files
-  originalFileUrl       String?   @map("original_file_url")
-  exportedPdfUrl        String?   @map("exported_pdf_url")
+  originalFileUrl       String?
+  exportedPdfUrl        String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  lastAccessedAt        DateTime? @map("last_accessed_at")
-  deletedAt             DateTime? @map("deleted_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastAccessedAt        DateTime?
+  deletedAt             DateTime?
 
   // Version
   version               Int       @default(1)
-  parentResumeId        String?   @map("parent_resume_id") @db.Uuid
+  parentResumeId        String?
 
   // Relations
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   template              Template? @relation(fields: [templateId], references: [id])
-  jobDescription        JobDescription? @relation(fields: [aiOptimizedForJdId], references: [id])
+  optimizedFor          JobDescription? @relation("optimizedFor", fields: [aiOptimizedForJdId], references: [id])
   parentResume          Resume?   @relation("ResumeVariants", fields: [parentResumeId], references: [id])
   childResumes          Resume[]  @relation("ResumeVariants")
   versions              ResumeVersion[]
   analyses              Analysis[]
 
-  @@index([userId])
-  @@index([templateId])
-  @@index([status])
-  @@index([createdAt(sort: Desc)])
-  @@index([updatedAt(sort: Desc)])
   @@map("resumes")
 }
 
 model ResumeVersion {
-  id                    String    @id @default(uuid()) @db.Uuid
-  resumeId              String    @map("resume_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  resumeId              String
 
   // Version Info
-  versionNumber         Int       @map("version_number")
-  content               Json
+  versionNumber         Int
+  content               String
 
   // Change Tracking
-  changeSummary         String?   @map("change_summary")
-  changedByUserId       String?   @map("changed_by_user_id") @db.Uuid
-  changeType            String?   @map("change_type") @db.VarChar(20)
+  changeSummary         String?
+  changedByUserId       String?
+  changeType            String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
+  createdAt             DateTime  @default(now())
 
   // Relations
   resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@unique([resumeId, versionNumber])
-  @@index([resumeId])
-  @@index([createdAt(sort: Desc)])
   @@map("resume_versions")
 }
 
 model Template {
-  id                    String    @id @default(uuid()) @db.Uuid
+  id                    String    @id @default(uuid())
 
   // Template Info
-  name                  String    @unique @db.VarChar(100)
+  name                  String    @unique
   description           String?
-  category              String?   @db.VarChar(50)
+  category              String?
 
   // Design
-  design                Json
+  design                String
 
   // Preview
-  previewImageUrl       String?   @map("preview_image_url")
-  demoResumeId          String?   @map("demo_resume_id") @db.Uuid
+  previewImageUrl       String?
+  demoResumeId          String?
 
   // Status
-  isActive              Boolean   @default(true) @map("is_active")
-  isPremium             Boolean   @default(false) @map("is_premium")
-  atsScore              Int?      @map("ats_score")
+  isActive              Boolean   @default(true)
+  isPremium             Boolean   @default(false)
+  atsScore              Int?
 
   // Usage
-  usageCount            Int       @default(0) @map("usage_count")
+  usageCount            Int       @default(0)
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
   resumes               Resume[]
 
-  @@index([category])
-  @@index([isActive])
-  @@index([usageCount(sort: Desc)])
   @@map("templates")
 }
 
 model JobDescription {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String
 
   // Job Info
-  title                 String    @db.VarChar(255)
-  company               String?   @db.VarChar(255)
-  location              String?   @db.VarChar(255)
+  title                 String
+  company               String?
+  location              String?
 
   // Content
   description           String
-  extractedData         Json?     @map("extracted_data")
+  extractedData         String?
 
   // Source
-  sourceUrl             String?   @map("source_url")
+  sourceUrl             String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  deletedAt             DateTime? @map("deleted_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
 
   // Relations
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   analyses              Analysis[]
-  optimizedResumes      Resume[]
+  optimizedResumes      Resume[]  @relation("optimizedFor")
 
-  @@index([userId])
-  @@index([createdAt(sort: Desc)])
   @@map("job_descriptions")
 }
 
 model Analysis {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
-  resumeId              String    @map("resume_id") @db.Uuid
-  jobDescriptionId      String?   @map("job_description_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String
+  resumeId              String
+  jobDescriptionId      String?
 
   // Analysis Type
-  analysisType          String    @map("analysis_type") @db.VarChar(50)
+  analysisType          String
 
   // AI Provider
-  aiProvider            String?   @map("ai_provider") @db.VarChar(50)
-  modelUsed             String?   @map("model_used") @db.VarChar(100)
+  aiProvider            String?
+  modelUsed             String?
 
   // Results
-  results               Json
+  results               String
 
   // Performance
-  processingTimeMs      Int?      @map("processing_time_ms")
-  tokensUsed            Int?      @map("tokens_used")
-  estimatedCost         Decimal?  @map("estimated_cost") @db.Decimal(10, 6)
+  processingTimeMs      Int?
+  tokensUsed            Int?
+  estimatedCost         String?
 
   // Status
-  status                String    @default("pending") @db.VarChar(20)
-  errorMessage          String?   @map("error_message")
+  status                String    @default("pending")
+  errorMessage          String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  completedAt           DateTime? @map("completed_at")
+  createdAt             DateTime  @default(now())
+  completedAt           DateTime?
 
   // Relations
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   jobDescription        JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull)
 
-  @@index([userId])
-  @@index([resumeId])
-  @@index([createdAt(sort: Desc)])
-  @@index([status])
   @@map("analyses")
 }
 
 model AiUsage {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String
 
   // Request Info
-  feature               String    @db.VarChar(50)
-  aiProvider            String    @map("ai_provider") @db.VarChar(50)
-  model                 String?   @db.VarChar(100)
+  feature               String
+  aiProvider            String
+  model                 String?
 
   // Usage Metrics
-  tokensUsed            Int?      @map("tokens_used")
-  estimatedCost         Decimal?  @map("estimated_cost") @db.Decimal(10, 6)
+  tokensUsed            Int?
+  estimatedCost         String?
 
   // Summaries
-  requestSummary        String?   @map("request_summary")
-  responseSummary       String?   @map("response_summary")
+  requestSummary        String?
+  responseSummary       String?
 
   // Performance
-  responseTimeMs        Int?      @map("response_time_ms")
-  wasCached             Boolean   @default(false) @map("was_cached")
+  responseTimeMs        Int?
+  wasCached             Boolean   @default(false)
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  date                  DateTime  @default(now()) @db.Date
+  createdAt             DateTime  @default(now())
+  date                  DateTime  @default(now())
 
   // Relations
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([date])
-  @@index([feature])
   @@map("ai_usage")
 }
 
 model Subscription {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @unique @map("user_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String    @unique
 
   // Subscription Info
-  tier                  String    @db.VarChar(20)
-  status                String    @default("active") @db.VarChar(20)
+  tier                  String
+  status                String    @default("active")
 
   // Billing
-  stripeCustomerId      String?   @map("stripe_customer_id") @db.VarChar(255)
-  stripeSubscriptionId  String?   @map("stripe_subscription_id") @db.VarChar(255)
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
 
   // Dates
-  startDate             DateTime  @map("start_date")
-  endDate               DateTime? @map("end_date")
-  trialEndDate          DateTime? @map("trial_end_date")
-  cancelledAt           DateTime? @map("cancelled_at")
+  startDate             DateTime
+  endDate               DateTime?
+  trialEndDate          DateTime?
+  cancelledAt           DateTime?
 
   // Custom Limits
-  customLimits          Json?     @map("custom_limits")
+  customLimits          String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([status])
-  @@index([endDate])
   @@map("subscriptions")
 }
 
 model AuditLog {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String?   @map("user_id") @db.Uuid
+  id                    String    @id @default(uuid())
+  userId                String?
 
   // Action Info
-  action                String    @db.VarChar(100)
-  entityType            String?   @map("entity_type") @db.VarChar(50)
-  entityId              String?   @map("entity_id") @db.Uuid
+  action                String
+  entityType            String?
+  entityId              String?
 
   // Request Details
-  ipAddress             String?   @map("ip_address") @db.Inet
-  userAgent             String?   @map("user_agent")
+  ipAddress             String?
+  userAgent             String?
 
   // Changes
-  changes               Json?
+  changes               String?
 
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
+  createdAt             DateTime  @default(now())
 
   // Relations
   user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt(sort: Desc)])
   @@map("audit_logs")
 }
