@@ -1,0 +1,13 @@
+{
+    "short_name": "ATS Resume Analyzer",
+    "name": "ATS Resume Analyzer",
+    "description": "A modern applicant tracking system frontend built with React.",
+    "icons": [
+
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#1976d2",
+    "background_color": "#ffffff",
+    "orientation": "portrait"
+}

@@ -16,10 +16,14 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
+    // console.log('Access token from store:', token ? 'present' : 'null/undefined');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // console.log('Authorization header set');
+    } else {
+      // console.log('No token available, request will be unauthenticated');
     }
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    // console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -45,14 +49,14 @@ apiClient.interceptors.response.use(
           refreshToken,
         });
 
-        const { accessToken } = response.data.data;
+        const { tokens } = response.data.data;
         useAuthStore.getState().setAuth(
           useAuthStore.getState().user,
-          accessToken,
-          refreshToken
+          tokens.accessToken,
+          tokens.refreshToken
         );
 
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         useAuthStore.getState().clearAuth();

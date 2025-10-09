@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth.service';
-import { AuthRequest } from '../middleware/auth.middleware';
+import { AuthRequest, authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
 const authService = new AuthService();
@@ -106,7 +106,7 @@ router.post('/refresh', [
   }
 });
 
-router.get('/me', async (req: AuthRequest, res) => {
+router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ error: 'Not authenticated' });

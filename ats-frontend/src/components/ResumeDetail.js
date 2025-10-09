@@ -1,33 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getResumeById, analyzeResume } from '../services/api';
+import React, { useState } from 'react';
+import { analyzeResume } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import AnalysisResults from './AnalysisResults';
 
-const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
-  const [resume, setResume] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
-
-  const fetchResume = useCallback(async () => {
-    try {
-      setLoading(true);
-      const result = await getResumeById(resumeId);
-      setResume(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [resumeId]);
-
-  useEffect(() => {
-    fetchResume();
-  }, [fetchResume]);
+  const [error, setError] = useState('');
 
   const handleAnalyze = async () => {
     if (!jobDescription.trim()) {
@@ -40,8 +22,8 @@ const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
       setError('');
 
       // Create a File object from the resume content for analysis
-      const resumeBlob = new Blob([resume.content], { type: 'text/plain' });
-      const resumeFile = new File([resumeBlob], `${resume.title}.txt`, { type: 'text/plain' });
+      const resumeBlob = new Blob([initialResume.content], { type: 'text/plain' });
+      const resumeFile = new File([resumeBlob], `${initialResume.title}.txt`, { type: 'text/plain' });
 
       const result = await analyzeResume(resumeFile, jobDescription);
       setAnalysisResult(result);
@@ -63,20 +45,12 @@ const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error && !resume) {
+  if (error && !initialResume) {
     return <ErrorMessage message={error} />;
   }
 
-  if (!resume) {
-    return <ErrorMessage message="Resume not found" />;
+  if (!initialResume) {
+    return <div>Resume not found</div>;
   }
 
   return (
@@ -93,7 +67,7 @@ const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
           Back to Resumes
         </button>
         <button
-          onClick={() => onEdit(resume)}
+          onClick={() => onEdit(initialResume)}
           className="btn-glass text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
         >
           <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,27 +82,27 @@ const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-              {resume.title}
+              {initialResume.title}
             </h1>
             <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-              <span>Created {formatDate(resume.createdAt)}</span>
-              {resume.updatedAt !== resume.createdAt && (
-                <span>Updated {formatDate(resume.updatedAt)}</span>
+              <span>Created {formatDate(initialResume.createdAt)}</span>
+              {initialResume.updatedAt !== initialResume.createdAt && (
+                <span>Updated {formatDate(initialResume.updatedAt)}</span>
               )}
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                resume.status === 'published'
+                initialResume.status === 'published'
                   ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                   : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
               }`}>
-                {resume.status || 'Draft'}
+                {initialResume.status || 'Draft'}
               </span>
             </div>
           </div>
-          {resume.templateId && (
+          {initialResume.templateId && (
             <div className="text-right">
               <div className="text-sm text-gray-500 dark:text-gray-400">Template</div>
               <div className="font-medium text-gray-800 dark:text-white capitalize">
-                {resume.templateId}
+                {initialResume.templateId}
               </div>
             </div>
           )}
@@ -137,7 +111,7 @@ const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
         {/* Resume Content */}
         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6">
           <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-sans text-sm leading-relaxed">
-            {resume.content}
+            {initialResume.content}
           </pre>
         </div>
       </div>
