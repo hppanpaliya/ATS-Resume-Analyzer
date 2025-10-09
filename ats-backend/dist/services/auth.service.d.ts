@@ -22,7 +22,7 @@ export declare class AuthService {
             updatedAt: Date;
             lastLoginAt: Date | null;
             deletedAt: Date | null;
-            settings: import("@prisma/client/runtime/library").JsonValue;
+            settings: string;
         };
         accessToken: string;
         refreshToken: string;
@@ -49,7 +49,7 @@ export declare class AuthService {
             updatedAt: Date;
             lastLoginAt: Date | null;
             deletedAt: Date | null;
-            settings: import("@prisma/client/runtime/library").JsonValue;
+            settings: string;
         };
         accessToken: string;
         refreshToken: string;

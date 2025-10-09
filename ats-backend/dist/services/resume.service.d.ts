@@ -6,7 +6,7 @@ export declare class ResumeService {
         deletedAt: Date | null;
         userId: string;
         title: string;
-        content: import("@prisma/client/runtime/library").JsonValue;
+        content: string;
         extractedText: string | null;
         status: string;
         isPublic: boolean;
@@ -33,7 +33,7 @@ export declare class ResumeService {
             deletedAt: Date | null;
             userId: string;
             title: string;
-            content: import("@prisma/client/runtime/library").JsonValue;
+            content: string;
             extractedText: string | null;
             status: string;
             isPublic: boolean;
@@ -61,7 +61,7 @@ export declare class ResumeService {
             name: string;
             description: string | null;
             category: string | null;
-            design: import("@prisma/client/runtime/library").JsonValue;
+            design: string;
             previewImageUrl: string | null;
             demoResumeId: string | null;
             isActive: boolean;
@@ -76,7 +76,7 @@ export declare class ResumeService {
         deletedAt: Date | null;
         userId: string;
         title: string;
-        content: import("@prisma/client/runtime/library").JsonValue;
+        content: string;
         extractedText: string | null;
         status: string;
         isPublic: boolean;
@@ -96,7 +96,7 @@ export declare class ResumeService {
         deletedAt: Date | null;
         userId: string;
         title: string;
-        content: import("@prisma/client/runtime/library").JsonValue;
+        content: string;
         extractedText: string | null;
         status: string;
         isPublic: boolean;
@@ -110,5 +110,9 @@ export declare class ResumeService {
         parentResumeId: string | null;
     }>;
     deleteResume(resumeId: string, userId: string): Promise<void>;
+    exportToPDF(resumeId: string, userId: string): Promise<Buffer>;
+    exportToWord(resumeId: string, userId: string): Promise<Buffer>;
+    parseResumeWithAI(text: string, userId: string): Promise<any>;
+    generateFormattedHTML(structuredResume: any, template?: any): string;
 }
 //# sourceMappingURL=resume.service.d.ts.map

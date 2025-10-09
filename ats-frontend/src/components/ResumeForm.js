@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createResume, updateResume } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
+import useAuthStore from '../stores/authStore';
 
 const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
 
   useEffect(() => {
     if (resume) {
@@ -57,6 +60,93 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
       onSave(result);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleParseWithAI = async () => {
+    if (!formData.content.trim()) {
+      setError('Please enter resume content to parse');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch('http://localhost:3001/api/resumes/parse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
+        },
+        body: JSON.stringify({ text: formData.content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to parse resume with AI');
+      }
+
+      const result = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        content: JSON.stringify(result.data, null, 2),
+      }));
+    } catch (err) {
+      setError(`AI parsing failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!formData.content.trim()) {
+      setError('Please enter resume content to preview');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      // For preview, we'll create a temporary structured format
+      let structuredContent;
+      try {
+        structuredContent = JSON.parse(formData.content);
+      } catch {
+        // If not JSON, create basic structure
+        structuredContent = {
+          personalInfo: { fullName: 'Your Name' },
+          summary: formData.content.substring(0, 200) + '...',
+          experience: [],
+          education: [],
+          skills: [],
+        };
+      }
+
+      // Generate preview HTML
+      const response = await fetch('http://localhost:3001/api/resumes/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
+        },
+        body: JSON.stringify({
+          content: structuredContent,
+          templateId: formData.templateId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate preview');
+      }
+
+      const html = await response.text();
+      setPreviewHtml(html);
+      setShowPreview(true);
+    } catch (err) {
+      setError(`Preview failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -170,6 +260,32 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
             </p>
           </div>
 
+          {/* AI Tools */}
+          <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={handleParseWithAI}
+              disabled={loading || !formData.content.trim()}
+              className="flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Parse with AI
+            </button>
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={loading || !formData.content.trim()}
+              className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M9 9h6M9 15h6" />
+              </svg>
+              Preview Resume
+            </button>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
             <button
@@ -195,6 +311,43 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
             </button>
           </div>
         </form>
+
+        {/* Preview Button - only shown when editing */}
+        {isEditing && (
+          <div className="mt-6">
+            <button
+              onClick={handlePreview}
+              className="w-full px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M9 9h6M9 15h6" />
+              </svg>
+              Preview Resume
+            </button>
+          </div>
+        )}
+
+        {/* Preview Modal */}
+        {showPreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-w-3xl">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                  Resume Preview
+                </h3>
+                <div className="resume-preview" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              </div>
+              <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

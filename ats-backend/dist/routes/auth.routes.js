@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const auth_service_1 = require("../services/auth.service");
+const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
 const authService = new auth_service_1.AuthService();
 router.post('/register', [
@@ -96,7 +97,7 @@ router.post('/refresh', [
         res.status(401).json({ error: error.message });
     }
 });
-router.get('/me', async (req, res) => {
+router.get('/me', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         if (!req.userId) {
             return res.status(401).json({ error: 'Not authenticated' });

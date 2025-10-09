@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { analyzeResume } from '../services/api';
+import useAuthStore from '../stores/authStore';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import AnalysisResults from './AnalysisResults';
@@ -35,6 +36,34 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
     }
   };
 
+  const handleExport = async (format) => {
+    try {
+      const token = useAuthStore.getState().accessToken;
+      const response = await fetch(`http://localhost:3001/api/resumes/${initialResume.id}/export/${format}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to export as ${format.toUpperCase()}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `resume-${initialResume.id}.${format === 'pdf' ? 'pdf' : 'docx'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(`Failed to export resume: ${err.message}`);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -66,15 +95,37 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
           </svg>
           Back to Resumes
         </button>
-        <button
-          onClick={() => onEdit(initialResume)}
-          className="btn-glass text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
-        >
-          <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          Edit Resume
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => handleExport('pdf')}
+            className="flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            title="Export as PDF"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            PDF
+          </button>
+          <button
+            onClick={() => handleExport('word')}
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            title="Export as Word"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Word
+          </button>
+          <button
+            onClick={() => onEdit(initialResume)}
+            className="btn-glass text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          >
+            <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Resume
+          </button>
+        </div>
       </div>
 
       {/* Resume Header */}
