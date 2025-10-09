@@ -6,6 +6,9 @@ import FileUpload from '../components/FileUpload';
 import JobDescriptionInput from '../components/JobDescriptionInput';
 import ModelSelector from '../components/ModelSelector';
 import AnalysisResults from '../components/AnalysisResults';
+import ResumeList from '../components/ResumeList';
+import ResumeForm from '../components/ResumeForm';
+import ResumeDetail from '../components/ResumeDetail';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SettingsPanel from '../components/SettingsPanel';
@@ -25,6 +28,11 @@ const Dashboard = () => {
   const [connectionStatus, setConnectionStatus] = useState('checking');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
+
+  // Resume Management state
+  const [currentView, setCurrentView] = useState('analysis'); // 'analysis', 'resumes', 'resume-detail', 'resume-form'
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [editingResume, setEditingResume] = useState(null);
 
   const { theme } = useTheme();
 
@@ -112,6 +120,29 @@ const Dashboard = () => {
     localStorage.removeItem('showModelSelector');
     localStorage.removeItem('selectedModel');
     setAnalysisResult(null);
+  }, []);
+
+  // Resume Management handlers
+  const handleCreateResume = useCallback(() => {
+    setEditingResume(null);
+    setCurrentView('resume-form');
+  }, []);
+
+  const handleEditResume = useCallback((resume) => {
+    setEditingResume(resume);
+    setCurrentView('resume-form');
+  }, []);
+
+  const handleViewResume = useCallback((resume) => {
+    setSelectedResume(resume);
+    setCurrentView('resume-detail');
+  }, []);
+
+  const handleSaveResume = useCallback((savedResume) => {
+    setCurrentView('resumes');
+    setEditingResume(null);
+    setSelectedResume(null);
+    // Could refresh resume list here if needed
   }, []);
 
   // Persist settings to localStorage
@@ -276,89 +307,141 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          {/* Input Column */}
-          <div className="space-y-8 slide-up">
-            <FileUpload
-              onFileSelect={handleFileSelect}
-              onFileError={handleFileError}
-              selectedFile={resumeFile}
-            />
-
-            <JobDescriptionInput
-              value={jobDescription}
-              onChange={handleJobDescriptionChange}
-            />
-
-            {/* Model Selector */}
-            <ModelSelector
-              onModelSelect={handleModelSelect}
-              selectedModel={selectedModel}
-              disabled={!showModelSelector || connectionStatus !== 'connected'}
-            />
-
-            {/* Analyze Button */}
+        {/* Navigation Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="glass-strong rounded-2xl p-2 flex space-x-2">
             <button
-              onClick={handleAnalyze}
-              disabled={!resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'}
-              className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
-                !resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'
-                  ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed backdrop-blur-md'
-                  : 'btn-glass text-white shadow-lg hover:shadow-2xl'
+              onClick={() => setCurrentView('analysis')}
+              className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                currentView === 'analysis'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <LoadingSpinner />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>
-                    {connectionStatus !== 'connected' ? 'Connecting...' : 'Analyze Resume'}
-                  </span>
-                  {showModelSelector && selectedModel && connectionStatus === 'connected' && (
-                    <span className="text-sm opacity-80">
-                      with AI
-                    </span>
-                  )}
-                </div>
-              )}
+              ATS Analysis
             </button>
-
-            {error && <ErrorMessage message={error} />}
-          </div>
-
-          {/* Results Column */}
-          <div className="space-y-8 slide-up" style={{ animationDelay: '0.2s' }}>
-            <AnalysisResults results={analysisResult} />
-
-            {/* Model Info Display */}
-            {analysisResult && analysisResult.modelUsed && (
-              <div className="glass rounded-2xl p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white">
-                      Analysis by: {analysisResult.modelUsed.name}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">
-                      Provider: {analysisResult.modelUsed.provider} • Model: {analysisResult.modelUsed.id}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <button
+              onClick={() => setCurrentView('resumes')}
+              className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                currentView === 'resumes'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-white/10'
+              }`}
+            >
+              Resume Management
+            </button>
           </div>
         </div>
+
+        {/* Main Content */}
+        {currentView === 'analysis' && (
+          <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+            {/* Input Column */}
+            <div className="space-y-8 slide-up">
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                onFileError={handleFileError}
+                selectedFile={resumeFile}
+              />
+
+              <JobDescriptionInput
+                value={jobDescription}
+                onChange={handleJobDescriptionChange}
+              />
+
+              {/* Model Selector */}
+              <ModelSelector
+                onModelSelect={handleModelSelect}
+                selectedModel={selectedModel}
+                disabled={!showModelSelector || connectionStatus !== 'connected'}
+              />
+
+              {/* Analyze Button */}
+              <button
+                onClick={handleAnalyze}
+                disabled={!resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'}
+                className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
+                  !resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'
+                    ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed backdrop-blur-md'
+                    : 'btn-glass text-white shadow-lg hover:shadow-2xl'
+                }`}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>
+                      {connectionStatus !== 'connected' ? 'Connecting...' : 'Analyze Resume'}
+                    </span>
+                    {showModelSelector && selectedModel && connectionStatus === 'connected' && (
+                      <span className="text-sm opacity-80">
+                        with AI
+                      </span>
+                    )}
+                  </div>
+                )}
+              </button>
+
+              {error && <ErrorMessage message={error} />}
+            </div>
+
+            {/* Results Column */}
+            <div className="space-y-8 slide-up" style={{ animationDelay: '0.2s' }}>
+              <AnalysisResults results={analysisResult} />
+
+              {/* Model Info Display */}
+              {analysisResult && analysisResult.modelUsed && (
+                <div className="glass rounded-2xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white">
+                        Analysis by: {analysisResult.modelUsed.name}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
+                        Provider: {analysisResult.modelUsed.provider} • Model: {analysisResult.modelUsed.id}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {currentView === 'resumes' && (
+          <ResumeList
+            onViewResume={handleViewResume}
+            onEditResume={handleEditResume}
+            onCreateResume={handleCreateResume}
+          />
+        )}
+
+        {currentView === 'resume-detail' && selectedResume && (
+          <ResumeDetail
+            resume={selectedResume}
+            onBack={() => setCurrentView('resumes')}
+            onEdit={() => handleEditResume(selectedResume)}
+          />
+        )}
+
+        {currentView === 'resume-form' && (
+          <ResumeForm
+            resume={editingResume}
+            onSave={handleSaveResume}
+            onCancel={() => setCurrentView('resumes')}
+          />
+        )}
 
         {/* Footer */}
         <div className="mt-16 text-center">

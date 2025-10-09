@@ -1,0 +1,212 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { getResumeById, analyzeResume } from '../services/api';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorMessage from './ErrorMessage';
+import AnalysisResults from './AnalysisResults';
+
+const ResumeDetail = ({ resumeId, onBack, onEdit }) => {
+  const [resume, setResume] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+
+  const fetchResume = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await getResumeById(resumeId);
+      setResume(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [resumeId]);
+
+  useEffect(() => {
+    fetchResume();
+  }, [fetchResume]);
+
+  const handleAnalyze = async () => {
+    if (!jobDescription.trim()) {
+      setError('Please enter a job description to analyze against');
+      return;
+    }
+
+    try {
+      setAnalyzing(true);
+      setError('');
+
+      // Create a File object from the resume content for analysis
+      const resumeBlob = new Blob([resume.content], { type: 'text/plain' });
+      const resumeFile = new File([resumeBlob], `${resume.title}.txt`, { type: 'text/plain' });
+
+      const result = await analyzeResume(resumeFile, jobDescription);
+      setAnalysisResult(result);
+      setShowAnalysis(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error && !resume) {
+    return <ErrorMessage message={error} />;
+  }
+
+  if (!resume) {
+    return <ErrorMessage message="Resume not found" />;
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Resumes
+        </button>
+        <button
+          onClick={() => onEdit(resume)}
+          className="btn-glass text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+        >
+          <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit Resume
+        </button>
+      </div>
+
+      {/* Resume Header */}
+      <div className="glass-strong rounded-3xl p-8">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+              {resume.title}
+            </h1>
+            <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+              <span>Created {formatDate(resume.createdAt)}</span>
+              {resume.updatedAt !== resume.createdAt && (
+                <span>Updated {formatDate(resume.updatedAt)}</span>
+              )}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                resume.status === 'published'
+                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                  : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+              }`}>
+                {resume.status || 'Draft'}
+              </span>
+            </div>
+          </div>
+          {resume.templateId && (
+            <div className="text-right">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Template</div>
+              <div className="font-medium text-gray-800 dark:text-white capitalize">
+                {resume.templateId}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Resume Content */}
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6">
+          <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-sans text-sm leading-relaxed">
+            {resume.content}
+          </pre>
+        </div>
+      </div>
+
+      {/* Analysis Section */}
+      <div className="glass-strong rounded-3xl p-8">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+          Resume Analysis
+        </h2>
+
+        {!showAnalysis ? (
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="jobDescription" className="block text-lg font-semibold text-gray-800 dark:text-white mb-3">
+                Job Description
+              </label>
+              <textarea
+                id="jobDescription"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste the job description you want to analyze this resume against..."
+                rows={8}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {error && <ErrorMessage message={error} />}
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleAnalyze}
+                disabled={analyzing || !jobDescription.trim()}
+                className="btn-glass text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {analyzing ? (
+                  <div className="flex items-center">
+                    <LoadingSpinner />
+                    <span className="ml-3">Analyzing Resume...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Analyze Resume Match
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Analysis Results
+              </h3>
+              <button
+                onClick={() => setShowAnalysis(false)}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+              >
+                Analyze Different Job
+              </button>
+            </div>
+            <AnalysisResults results={analysisResult} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ResumeDetail;
