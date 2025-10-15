@@ -362,7 +362,7 @@ const Dashboard = () => {
                 disabled={!resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'}
                 className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
                   !resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'
-                    ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed backdrop-blur-md'
+                    ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed'
                     : 'btn-glass text-white shadow-lg hover:shadow-2xl'
                 }`}
               >

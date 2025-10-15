@@ -37,7 +37,7 @@ const SettingsPanel = ({
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 fade-in"
+            className="fixed inset-0 bg-black/90  z-30 fade-in"
             onClick={() => setIsOpen(false)}
           />
           

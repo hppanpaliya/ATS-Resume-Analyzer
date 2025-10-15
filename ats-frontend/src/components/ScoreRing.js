@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const ScoreRing = ({ score, size = 140 }) => {
+const ScoreRing = ({ score, size = 180 }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
   const radius = (size - 20) / 2;
   const circumference = 2 * Math.PI * radius;
