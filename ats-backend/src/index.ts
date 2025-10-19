@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes';
 import resumeRoutes from './routes/resume.routes';
 import aiRoutes from './routes/ai.routes';
 import { authMiddleware } from './middleware/auth.middleware';
+import path from 'path';
 
 dotenv.config();
 
@@ -32,6 +33,14 @@ app.get('/health', (req, res) => {
 // Protected route example
 app.get('/api/protected', authMiddleware, (req, res) => {
   res.json({ message: 'This is a protected route', userId: (req as any).userId });
+});
+
+// serve react at /
+
+app.use(express.static('build'));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../build/index.html'));
 });
 
 app.listen(PORT, () => {
