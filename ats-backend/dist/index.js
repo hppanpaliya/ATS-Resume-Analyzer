@@ -10,6 +10,7 @@ const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const resume_routes_1 = __importDefault(require("./routes/resume.routes"));
 const ai_routes_1 = __importDefault(require("./routes/ai.routes"));
 const auth_middleware_1 = require("./middleware/auth.middleware");
+const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,11 @@ app.get('/health', (req, res) => {
 // Protected route example
 app.get('/api/protected', auth_middleware_1.authMiddleware, (req, res) => {
     res.json({ message: 'This is a protected route', userId: req.userId });
+});
+// serve react at /
+app.use(express_1.default.static('build'));
+app.get('*', (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, '../build/index.html'));
 });
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

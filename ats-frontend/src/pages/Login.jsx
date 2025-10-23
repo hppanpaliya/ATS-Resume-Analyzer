@@ -18,22 +18,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // console.log('Attempting login with:', email);
       const data = await authService.login(email, password);
-      // console.log('Login response:', data);
-      // console.log('Tokens received:', data.tokens);
-      // console.log('Access token value:', data.tokens.accessToken);
-      // console.log('Refresh token value:', data.tokens.refreshToken);
-      // console.log('User value:', data.user);
-      // console.log('Calling setAuth with:', data.user, data.tokens.accessToken, data.tokens.refreshToken);
       setAuth(data.user, data.tokens.accessToken, data.tokens.refreshToken);
-      // console.log('Auth store updated, navigating to dashboard');
-      
-      // Verify what's in the store immediately after
-      const storeState = useAuthStore.getState();
-      // console.log('Store state immediately after setAuth:', storeState);
-      // console.log('Store accessToken:', storeState.accessToken);
-      
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);

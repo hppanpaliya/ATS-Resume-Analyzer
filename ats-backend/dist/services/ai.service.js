@@ -46,8 +46,11 @@ class AIService {
                 id: model.id,
                 name: model.name || model.id,
                 provider: model.id.split('/')[0],
-                contextLength: model.context_length || 4096,
-                pricing: model.pricing
+                context_length: model.context_length || 4096,
+                pricing: model.pricing,
+                created: model.created,
+                description: model.description || '',
+                architecture: model.architecture,
             }));
             modelCache.data = models;
             modelCache.lastFetched = now;

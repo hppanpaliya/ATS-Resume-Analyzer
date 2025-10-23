@@ -19,13 +19,7 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
   const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
 
   // Fetch models from backend
-  useEffect(() => {
-    if (!disabled) {
-      fetchModels();
-    }
-  }, [disabled]);
-
-  const fetchModels = async () => {
+  const fetchModels = React.useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -62,15 +56,21 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedModel, onModelSelect, DEFAULT_MODEL]);
+
+  useEffect(() => {
+    if (!disabled) {
+      fetchModels();
+    }
+  }, [disabled, fetchModels]);
 
   // Context length filter options
-  const contextLengthOptions = [
+  const contextLengthOptions = useMemo(() => [
     { value: 'all', label: 'All Context Lengths' },
     { value: 'small', label: '< 32K tokens', min: 0, max: 32000 },
     { value: 'medium', label: '32K - 128K tokens', min: 32000, max: 128000 },
     { value: 'large', label: '128K+ tokens', min: 128000, max: Infinity }
-  ];
+  ], []);
 
   // Filtered and sorted models
   const filteredAndSortedModels = useMemo(() => {
@@ -121,7 +121,7 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
     });
 
     return filtered;
-  }, [models, searchQuery, showRecommendedOnly, contextLengthFilter, sortBy, sortOrder]);
+  }, [models, searchQuery, showRecommendedOnly, contextLengthFilter, sortBy, sortOrder, contextLengthOptions]);
 
   const handleRefreshModels = async () => {
     await fetchModels();

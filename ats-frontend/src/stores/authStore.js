@@ -10,13 +10,6 @@ const useAuthStore = create(
       isAuthenticated: false,
 
       setAuth: (user, accessToken, refreshToken) => {
-        // console.log('=== setAuth DEBUG START ===');
-        // console.log('Param user:', user);
-        // console.log('Param accessToken:', accessToken);
-        // console.log('Param refreshToken:', refreshToken);
-        // console.log('Type of accessToken:', typeof accessToken);
-        // console.log('AccessToken length:', accessToken?.length);
-        
         set({
           user: user,
           accessToken: accessToken,
@@ -26,18 +19,6 @@ const useAuthStore = create(
         
         console.log('State set called');
         
-        // Force immediate log to see what was set
-        setTimeout(() => {
-          const currentState = get();
-          // console.log('=== AFTER SET DEBUG ===');
-          // console.log('Full state:', currentState);
-          // console.log('State.user:', currentState.user);
-          // console.log('State.accessToken:', currentState.accessToken);
-          // console.log('State.refreshToken:', currentState.refreshToken);
-          // console.log('Type of state.accessToken:', typeof currentState.accessToken);
-          // console.log('localStorage auth-storage:', localStorage.getItem('auth-storage'));
-          // console.log('=== setAuth DEBUG END ===');
-        }, 100);
       },
 
       clearAuth: () => {
