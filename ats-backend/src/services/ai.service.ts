@@ -50,6 +50,8 @@ export class AIService {
                     name: model.name || model.id,
                     provider: model.id.split('/')[0],
                     context_length: model.context_length || 4096,
+                    supported_parameters: model.supported_parameters || [],
+                    per_request_limits: model.per_request_limits,
                     pricing: model.pricing,
                     created: model.created,
                     description: model.description || '',

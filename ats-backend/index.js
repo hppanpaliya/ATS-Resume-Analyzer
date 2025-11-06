@@ -124,7 +124,16 @@ async function fetchModelsFromOpenRouter() {
             context_length: 32768,
             architecture: { modality: 'text->text' },
             per_request_limits: null,
-            supported_parameters: ['temperature', 'max_tokens', 'top_p'],
+            supported_parameters: [
+            "max_tokens",
+            "response_format",
+            "seed",
+            "stop",
+            "temperature",
+            "tool_choice",
+            "tools",
+            "top_p"
+            ],
             provider: 'Google',
             recommended: true
         }];
