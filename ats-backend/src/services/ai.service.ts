@@ -80,7 +80,16 @@ export class AIService {
         return this.getAvailableModels();
     }
 
-    async analyzeResume(text: string, jobDescription: string, selectedModel?: string) {
+    async analyzeResume(
+        text: string, 
+        jobDescription: string, 
+        selectedModel?: string,
+        modelParameters?: {
+            temperature?: number;
+            max_tokens?: number;
+            include_reasoning?: boolean;
+        }
+    ) {
         const model = selectedModel || DEFAULT_MODEL;
 
         const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume against the job description and provide a detailed assessment.
@@ -127,7 +136,8 @@ Focus on:
 Be thorough but concise. Provide specific examples and actionable advice.`;
 
         try {
-            const completion = await openai.chat.completions.create({
+            // Build completion parameters with defaults and user overrides
+            const completionParams: any = {
                 model: model,
                 messages: [
                     {
@@ -135,9 +145,17 @@ Be thorough but concise. Provide specific examples and actionable advice.`;
                         content: prompt
                     }
                 ],
-                temperature: 0.3,
-                max_tokens: 4000
-            });
+                temperature: modelParameters?.temperature ?? 0.15,
+                max_tokens: Math.min(modelParameters?.max_tokens ?? 4000, 16000),
+                seed: 42, // Fixed seed for reproducibility
+            };
+
+            // Add reasoning if enabled
+            if (modelParameters?.include_reasoning) {
+                completionParams.reasoning_effort = 'medium'; // Can be 'low', 'medium', or 'high'
+            }
+
+            const completion = await openai.chat.completions.create(completionParams);
 
             const response = completion.choices[0]?.message?.content;
             if (!response) {

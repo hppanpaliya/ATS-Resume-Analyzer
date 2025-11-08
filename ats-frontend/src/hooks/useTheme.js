@@ -8,12 +8,12 @@ const useTheme = () => {
       return savedTheme;
     }
     
-    // Check system preference, default to dark
+    // Check system preference
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
     
-    return 'dark'; // Default to dark mode
+    return 'light'; // Default to light mode
   });
 
   useEffect(() => {

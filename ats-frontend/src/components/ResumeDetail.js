@@ -132,10 +132,10 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
       <div className="glass-strong rounded-3xl p-8">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {initialResume.title}
             </h1>
-            <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
               <span>Created {formatDate(initialResume.createdAt)}</span>
               {initialResume.updatedAt !== initialResume.createdAt && (
                 <span>Updated {formatDate(initialResume.updatedAt)}</span>
@@ -151,8 +151,8 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
           </div>
           {initialResume.templateId && (
             <div className="text-right">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Template</div>
-              <div className="font-medium text-gray-800 dark:text-white capitalize">
+              <div className="text-sm text-gray-600 dark:text-gray-400">Template</div>
+              <div className="font-medium text-gray-900 dark:text-white capitalize">
                 {initialResume.templateId}
               </div>
             </div>
@@ -169,14 +169,14 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
 
       {/* Analysis Section */}
       <div className="glass-strong rounded-3xl p-8">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Resume Analysis
         </h2>
 
         {!showAnalysis ? (
           <div className="space-y-6">
             <div>
-              <label htmlFor="jobDescription" className="block text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              <label htmlFor="jobDescription" className="block text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 Job Description
               </label>
               <textarea
@@ -216,7 +216,7 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
         ) : (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Analysis Results
               </h3>
               <button

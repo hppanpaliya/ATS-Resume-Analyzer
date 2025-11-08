@@ -46,7 +46,7 @@ const SettingsPanel = ({
             <div className="glass-strong rounded-3xl p-6 border border-white/25 shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                   <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-2 rounded-xl mr-3">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -71,7 +71,7 @@ const SettingsPanel = ({
                 <div className="p-4 glass rounded-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-800 dark:text-white mb-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">
                         🤖 AI Model Selection
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -117,7 +117,7 @@ const SettingsPanel = ({
 
                 {/* Additional Settings */}
                 <div className="space-y-3">
-                  <h4 className="font-medium text-gray-800 dark:text-white text-sm">
+                  <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                     Quick Actions
                   </h4>
                   
@@ -133,8 +133,8 @@ const SettingsPanel = ({
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800 dark:text-white text-sm">Reset Settings</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-300">Restore default configuration</p>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">Reset Settings</p>
+                        <p className="text-xs text-gray-700 dark:text-gray-300">Restore default configuration</p>
                       </div>
                     </div>
                   </button>

@@ -5,6 +5,7 @@ import { analyzeResume, testConnection } from '../services/api';
 import FileUpload from '../components/FileUpload';
 import JobDescriptionInput from '../components/JobDescriptionInput';
 import ModelSelector from '../components/ModelSelector';
+import ModelParameters from '../components/ModelParameters';
 import AnalysisResults from '../components/AnalysisResults';
 import ResumeList from '../components/ResumeList';
 import ResumeForm from '../components/ResumeForm';
@@ -26,15 +27,44 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('checking');
-  const [showModelSelector, setShowModelSelector] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
+  const [showModelSelector, setShowModelSelector] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    const saved = localStorage.getItem('showModelSelector');
+
+    if (saved === null) {
+      return false;
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch (err) {
+      console.warn('Failed to parse stored showModelSelector value:', err);
+      return false;
+    }
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    const saved = localStorage.getItem('selectedModel');
+    return saved || null;
+  });
+
+  // Model Parameters state
+  const [modelParameters, setModelParameters] = useState({
+    temperature: 0.15,
+    max_tokens: 4000,
+    include_reasoning: false
+  });
 
   // Resume Management state
   const [currentView, setCurrentView] = useState('analysis'); // 'analysis', 'resumes', 'resume-detail', 'resume-form'
   const [selectedResume, setSelectedResume] = useState(null);
   const [editingResume, setEditingResume] = useState(null);
 
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -49,19 +79,6 @@ const Dashboard = () => {
     };
 
     loadUser();
-  }, []);
-
-  // Load settings from localStorage
-  useEffect(() => {
-    const savedShowModelSelector = localStorage.getItem('showModelSelector');
-    const savedSelectedModel = localStorage.getItem('selectedModel');
-
-    if (savedShowModelSelector !== null) {
-      setShowModelSelector(JSON.parse(savedShowModelSelector));
-    }
-    if (savedSelectedModel) {
-      setSelectedModel(savedSelectedModel);
-    }
   }, []);
 
   // Check backend connection
@@ -156,6 +173,35 @@ const Dashboard = () => {
     }
   }, [selectedModel]);
 
+  // Persist model parameters to localStorage
+  useEffect(() => {
+    localStorage.setItem('modelParameters', JSON.stringify(modelParameters));
+  }, [modelParameters]);
+
+  // Load model parameters from localStorage on mount
+  useEffect(() => {
+    const savedParameters = localStorage.getItem('modelParameters');
+    if (savedParameters) {
+      try {
+        const parsedParameters = JSON.parse(savedParameters);
+        setModelParameters({
+          temperature: parsedParameters.temperature ?? 0.15,
+          max_tokens: parsedParameters.max_tokens ?? 4000,
+          include_reasoning: parsedParameters.include_reasoning ?? false
+        });
+      } catch (err) {
+        console.error('Failed to load saved parameters:', err);
+      }
+    }
+  }, []);
+
+  const handleModelParametersChange = useCallback((newParameters) => {
+    setModelParameters(newParameters);
+    if (analysisResult) {
+      setAnalysisResult(null);
+    }
+  }, [analysisResult]);
+
   const handleAnalyze = async () => {
     if (!resumeFile || !jobDescription) {
       setError('Please provide both a resume and job description');
@@ -175,7 +221,8 @@ const Dashboard = () => {
       const result = await analyzeResume(
         resumeFile,
         jobDescription,
-        showModelSelector ? selectedModel : null
+        showModelSelector ? selectedModel : null,
+        modelParameters
       );
       setAnalysisResult(result);
     } catch (err) {
@@ -222,14 +269,14 @@ const Dashboard = () => {
       <div className="min-h-screen animated-bg paper-texture flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+          <p className="text-gray-700 dark:text-gray-300">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen animated-bg paper-texture relative overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className="min-h-screen animated-bg paper-texture relative overflow-hidden">
       {/* Floating geometric shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl animate-pulse"></div>
@@ -237,7 +284,7 @@ const Dashboard = () => {
         <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-xl animate-pulse delay-2000"></div>
       </div>
 
-      <ThemeToggle />
+      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       <SettingsPanel
         showModelSelector={showModelSelector}
         onToggleModelSelector={handleToggleModelSelector}
@@ -267,28 +314,28 @@ const Dashboard = () => {
                 Logout
               </button>
             </div>
-            <p className="text-xl text-gray-600 dark:text-gray-300 font-light">
+            <p className="text-xl text-gray-700 dark:text-gray-300 font-light">
               Get AI-powered insights on how well your resume matches the job description
             </p>
             <div className="mt-6 flex justify-center space-x-4 flex-wrap">
               {/* Connection Status */}
               <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
                 <div className={`w-2 h-2 ${connectionInfo.color} rounded-full ${connectionStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
-                <span className="text-sm text-gray-600 dark:text-gray-300">{connectionInfo.text}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{connectionInfo.text}</span>
               </div>
 
               <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-300">AI-Powered Analysis</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">AI-Powered Analysis</span>
               </div>
               <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-500"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-300">Instant Results</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Instant Results</span>
               </div>
               {showModelSelector && (
                 <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse delay-1000"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Dynamic AI Models</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Dynamic AI Models</span>
                 </div>
               )}
             </div>
@@ -315,7 +362,7 @@ const Dashboard = () => {
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                 currentView === 'analysis'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-white/10'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
               ATS Analysis
@@ -325,7 +372,7 @@ const Dashboard = () => {
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                 currentView === 'resumes'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-white/10'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
               Resume Management
@@ -348,14 +395,6 @@ const Dashboard = () => {
                 value={jobDescription}
                 onChange={handleJobDescriptionChange}
               />
-
-              {/* Model Selector */}
-              <ModelSelector
-                onModelSelect={handleModelSelect}
-                selectedModel={selectedModel}
-                disabled={!showModelSelector || connectionStatus !== 'connected'}
-              />
-
               {/* Analyze Button */}
               <button
                 onClick={handleAnalyze}
@@ -388,6 +427,22 @@ const Dashboard = () => {
                 )}
               </button>
 
+              {/* Model Parameters - ABOVE Model Selector */}
+              <ModelParameters
+                parameters={modelParameters}
+                onParametersChange={handleModelParametersChange}
+                disabled={connectionStatus !== 'connected' || isLoading}
+              />
+
+              {/* Model Selector */}
+              <ModelSelector
+                onModelSelect={handleModelSelect}
+                selectedModel={selectedModel}
+                disabled={!showModelSelector || connectionStatus !== 'connected'}
+              />
+
+              
+
               {error && <ErrorMessage message={error} />}
             </div>
 
@@ -408,7 +463,7 @@ const Dashboard = () => {
                       <p className="text-sm font-medium text-gray-800 dark:text-white">
                         Analysis by: {analysisResult.modelUsed.name}
                       </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-300">
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
                         Provider: {analysisResult.modelUsed.provider} • Model: {analysisResult.modelUsed.id}
                       </p>
                     </div>
@@ -446,7 +501,7 @@ const Dashboard = () => {
         {/* Footer */}
         <div className="mt-16 text-center">
           <div className="glass rounded-2xl p-6 mx-auto max-w-2xl">
-            <p className="text-gray-600 dark:text-gray-300 font-light">
+            <p className="text-gray-700 dark:text-gray-300 font-light">
               Powered by advanced AI algorithms to help you land your dream job
             </p>
             {showModelSelector && (

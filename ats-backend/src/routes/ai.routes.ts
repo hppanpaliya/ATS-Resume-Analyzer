@@ -74,6 +74,13 @@ router.post('/analyze', upload.single('resume'), async (req: Request & { file?: 
         const jobDescription = req.body.jobDescription;
         const selectedModel = req.body.selectedModel;
 
+        // Extract model parameters from request body (simplified)
+        const modelParameters = {
+            temperature: req.body.temperature ? parseFloat(req.body.temperature) : undefined,
+            max_tokens: req.body.max_tokens ? parseInt(req.body.max_tokens) : undefined,
+            include_reasoning: req.body.include_reasoning === 'true' || req.body.include_reasoning === true
+        };
+
         if (!jobDescription) {
             return res.status(400).json({
                 success: false,
@@ -113,7 +120,7 @@ router.post('/analyze', upload.single('resume'), async (req: Request & { file?: 
         }
 
         // Analyze with AI
-        const analysisResult = await aiService.analyzeResume(text, jobDescription, selectedModel);
+        const analysisResult = await aiService.analyzeResume(text, jobDescription, selectedModel, modelParameters);
 
         res.json({
             success: true,

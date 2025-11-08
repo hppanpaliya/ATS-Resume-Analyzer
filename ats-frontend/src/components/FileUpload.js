@@ -40,7 +40,7 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
 
   return (
     <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-200 gpu-optimized">
-      <h2 className="text-2xl font-bold mb-6 flex items-center text-gray-800 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
         <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-xl mr-3 gpu-optimized">
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -79,10 +79,10 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
               </svg>
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">
             Drop your resume here
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4 text-lg">
+          <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
             or click to browse your files
           </p>
           <div className="flex justify-center space-x-4 mb-4">
@@ -93,7 +93,7 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
               DOCX
             </span>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Maximum file size: 10MB
           </p>
         </label>
@@ -110,7 +110,7 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>

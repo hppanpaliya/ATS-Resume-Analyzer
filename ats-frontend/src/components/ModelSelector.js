@@ -249,36 +249,39 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
           </div>
 
           {/* Filter Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Recommended Filter */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="recommended-filter"
-                checked={showRecommendedOnly}
-                onChange={(e) => setShowRecommendedOnly(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="recommended-filter" className="text-sm text-gray-700 dark:text-gray-300">
-                ⭐ Recommended only
-              </label>
+          <div className="space-y-3">
+            {/* First Row */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {/* Recommended Filter */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="recommended-filter"
+                  checked={showRecommendedOnly}
+                  onChange={(e) => setShowRecommendedOnly(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="recommended-filter" className="text-sm text-gray-700 dark:text-gray-300">
+                  ⭐ Recommended only
+                </label>
+              </div>
+
+              {/* Context Length Filter */}
+              <select
+                value={contextLengthFilter}
+                onChange={(e) => setContextLengthFilter(e.target.value)}
+                className="glass rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-300 focus:outline-none w-full sm:w-auto"
+              >
+                {contextLengthOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Context Length Filter */}
-            <select
-              value={contextLengthFilter}
-              onChange={(e) => setContextLengthFilter(e.target.value)}
-              className="glass rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-300 focus:outline-none"
-            >
-              {contextLengthOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Sort Controls */}
-            <div className="flex space-x-2">
+            {/* Second Row - Sort Controls */}
+            <div className="flex gap-2 items-stretch">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -291,8 +294,9 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="glass p-2 rounded-xl hover:bg-blue-100/20 dark:hover:bg-blue-900/20 transition-colors duration-200"
+                className="glass rounded-xl px-3 py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-blue-100/20 dark:hover:bg-blue-900/20 transition-colors duration-200 flex-shrink-0"
                 title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                aria-label={`Toggle sort order to ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
               >
                 <svg 
                   className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${

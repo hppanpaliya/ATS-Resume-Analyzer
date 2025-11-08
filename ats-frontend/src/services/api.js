@@ -86,14 +86,25 @@ apiClient.interceptors.response.use(
   }
 );
 
-export const analyzeResume = async (resumeFile, jobDescription, selectedModel = null) => {
+export const analyzeResume = async (resumeFile, jobDescription, selectedModel = null, modelParameters = {}) => {
   const formData = new FormData();
   formData.append('resume', resumeFile);
   formData.append('jobDescription', jobDescription);
   
   // Include selected model if provided
   if (selectedModel) {
-    formData.append('model', selectedModel);
+    formData.append('selectedModel', selectedModel);
+  }
+
+  // Include model parameters if provided
+  if (modelParameters.temperature !== undefined) {
+    formData.append('temperature', modelParameters.temperature);
+  }
+  if (modelParameters.max_tokens !== undefined) {
+    formData.append('max_tokens', modelParameters.max_tokens);
+  }
+  if (modelParameters.include_reasoning !== undefined) {
+    formData.append('include_reasoning', modelParameters.include_reasoning);
   }
 
   try {

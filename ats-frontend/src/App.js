@@ -8,13 +8,13 @@ import ThemeToggle from './components/ThemeToggle';
 import useTheme from './hooks/useTheme';
 
 function App() {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <BrowserRouter>
-      <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="min-h-screen">
         <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
         <Routes>

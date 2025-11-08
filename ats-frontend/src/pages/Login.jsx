@@ -37,14 +37,14 @@ const Login = () => {
         </h1>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
@@ -58,7 +58,7 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
@@ -80,7 +80,7 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
+        <p className="mt-6 text-center text-gray-700 dark:text-gray-300">
           Don't have an account?{' '}
           <Link to="/signup" className="text-purple-600 dark:text-purple-400 font-semibold">
             Sign up
