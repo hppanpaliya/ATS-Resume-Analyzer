@@ -25,7 +25,6 @@ code {
 .glass {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
 }
 
 .dark .glass {
@@ -36,7 +35,6 @@ code {
 .glass-strong {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(15px);
 }
 
 .dark .glass-strong {
@@ -74,21 +72,21 @@ code {
   border: 1px solid rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); */
 }
 
 .dark .btn-glass {
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); */
 }
 
 .btn-glass:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); */
 }
 
 .dark .btn-glass:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); */
 }
 .dropzone-active {
   background: rgba(102, 126, 234, 0.08);
