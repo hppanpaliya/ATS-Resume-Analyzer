@@ -20,7 +20,7 @@ const AnalysisResults = ({ results }) => {
   const scoreInfo = getScoreText(results.overallScore);
 
   return (
-    <>
+    <div className="space-y-8">
       {/* Overall Score */}
       <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300 slide-up">
         <h3 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
@@ -73,7 +73,7 @@ const AnalysisResults = ({ results }) => {
       <ExperienceRelevance relevance={results.experienceRelevance} />
       <FormattingScore formatting={results.formattingScore} />
       <ActionableAdvice advice={results.actionableAdvice} />
-    </>
+    </div>
   );
 };
 

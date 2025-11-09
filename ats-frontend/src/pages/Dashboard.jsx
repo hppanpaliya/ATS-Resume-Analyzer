@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
 import { authService } from '../services/authService';
 import { analyzeResume, testConnection } from '../services/api';
@@ -6,7 +7,6 @@ import FileUpload from '../components/FileUpload';
 import JobDescriptionInput from '../components/JobDescriptionInput';
 import ModelSelector from '../components/ModelSelector';
 import ModelParameters from '../components/ModelParameters';
-import AnalysisResults from '../components/AnalysisResults';
 import ResumeList from '../components/ResumeList';
 import ResumeForm from '../components/ResumeForm';
 import ResumeDetail from '../components/ResumeDetail';
@@ -21,6 +21,7 @@ import useTheme from '../hooks/useTheme';
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { clearAuth } = useAuthStore();
+  const navigate = useNavigate();
 
   // ATS Analysis state
   const [resumeFile, setResumeFile] = useState(null);
@@ -247,6 +248,11 @@ const Dashboard = () => {
         jobTitle
       );
       setAnalysisResult(result);
+
+      // Redirect to analysis page with the result
+      navigate(`/analysis/${result.savedAnalysisId || 'new'}`, {
+        state: { analysis: result }
+      });
     } catch (err) {
       setError(err.message || 'Analysis failed. Please try again.');
       console.error('Analysis error:', err);
@@ -414,7 +420,7 @@ const Dashboard = () => {
 
         {/* Main Content */}
         {currentView === 'analysis' && (
-          <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          <div className="max-w-2xl mx-auto">
             {/* Input Column */}
             <div className="space-y-8 slide-up">
               <FileUpload
@@ -476,32 +482,6 @@ const Dashboard = () => {
               
 
               {error && <ErrorMessage message={error} />}
-            </div>
-
-            {/* Results Column */}
-            <div className="space-y-8 slide-up" style={{ animationDelay: '0.2s' }}>
-              <AnalysisResults results={analysisResult} />
-
-              {/* Model Info Display */}
-              {analysisResult && analysisResult.modelUsed && (
-                <div className="glass rounded-2xl p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white">
-                        Analysis by: {analysisResult.modelUsed.name}
-                      </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        Provider: {analysisResult.modelUsed.provider} • Model: {analysisResult.modelUsed.id}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
