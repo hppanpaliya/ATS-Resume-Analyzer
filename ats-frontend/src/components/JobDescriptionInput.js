@@ -1,6 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getJobDescriptions } from '../services/api';
 
 const JobDescriptionInput = ({ value, onChange }) => {
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    const loadSavedJobs = async () => {
+      try {
+        const jobs = await getJobDescriptions();
+        setSavedJobs(jobs || []);
+      } catch (error) {
+        console.error('Failed to load saved job descriptions:', error);
+        setSavedJobs([]);
+      }
+    };
+
+    loadSavedJobs();
+  }, []);
+
+  const handleSelectJob = (job) => {
+    onChange(job.description);
+    setShowDropdown(false);
+  };
+
   return (
     <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300">
       <h2 className="text-2xl font-bold mb-6 flex items-center text-gray-800 dark:text-white">
@@ -12,6 +35,38 @@ const JobDescriptionInput = ({ value, onChange }) => {
         </div>
         Job Description
       </h2>
+
+      {/* Saved Jobs Dropdown */}
+      {Array.isArray(savedJobs) && savedJobs.length > 0 && (
+        <div className="mb-4 relative">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="w-full glass px-4 py-2 rounded-lg text-left flex items-center justify-between text-gray-700 dark:text-gray-300 hover:bg-white/10 transition-colors"
+          >
+            <span>Select from saved job descriptions</span>
+            <svg className={`w-5 h-5 transition-transform ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showDropdown && (
+            <div className="absolute z-10 w-full mt-1 glass-strong rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {savedJobs.map((job) => (
+                <button
+                  key={job.id}
+                  onClick={() => handleSelectJob(job)}
+                  className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                >
+                  <div className="font-medium text-gray-800 dark:text-white">{job.title}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    {job.description.substring(0, 100)}...
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="relative">
         <textarea

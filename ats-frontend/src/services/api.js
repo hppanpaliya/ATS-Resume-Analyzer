@@ -86,10 +86,15 @@ apiClient.interceptors.response.use(
   }
 );
 
-export const analyzeResume = async (resumeFile, jobDescription, selectedModel = null, modelParameters = {}) => {
+export const analyzeResume = async (resumeFile, jobDescription, selectedModel = null, modelParameters = {}, jobTitle = null) => {
   const formData = new FormData();
   formData.append('resume', resumeFile);
   formData.append('jobDescription', jobDescription);
+  
+  // Include job title if provided
+  if (jobTitle) {
+    formData.append('jobTitle', jobTitle);
+  }
   
   // Include selected model if provided
   if (selectedModel) {
@@ -142,13 +147,76 @@ export const refreshModelsCache = async () => {
   }
 };
 
-// Resume CRUD operations
-export const getResumes = async (page = 1, limit = 10, status) => {
+// Analysis history operations
+export const getAnalyses = async (page = 1, limit = 10) => {
   try {
-    const params = { page, limit };
-    if (status) params.status = status;
-    
-    const response = await apiClient.get('/api/resumes', { params });
+    const response = await apiClient.get('/api/analyses', {
+      params: { page, limit }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to fetch analyses:', error);
+    throw new Error(`Failed to load analyses: ${error.message}`);
+  }
+};
+
+export const getAnalysisById = async (analysisId) => {
+  try {
+    const response = await apiClient.get(`/api/analyses/${analysisId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to fetch analysis:', error);
+    throw new Error(`Failed to load analysis: ${error.message}`);
+  }
+};
+
+// Job description operations
+export const getJobDescriptions = async () => {
+  try {
+    const response = await apiClient.get('/api/job-descriptions');
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to fetch job descriptions:', error);
+    throw new Error(`Failed to load job descriptions: ${error.message}`);
+  }
+};
+
+export const createJobDescription = async (jobData) => {
+  try {
+    const response = await apiClient.post('/api/job-descriptions', jobData);
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to create job description:', error);
+    throw new Error(`Failed to create job description: ${error.message}`);
+  }
+};
+
+export const updateJobDescription = async (jobId, updates) => {
+  try {
+    const response = await apiClient.put(`/api/job-descriptions/${jobId}`, updates);
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to update job description:', error);
+    throw new Error(`Failed to update job description: ${error.message}`);
+  }
+};
+
+export const deleteJobDescription = async (jobId) => {
+  try {
+    const response = await apiClient.delete(`/api/job-descriptions/${jobId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete job description:', error);
+    throw new Error(`Failed to delete job description: ${error.message}`);
+  }
+};
+
+// Resume CRUD operations (updated to use PUT instead of PATCH)
+export const getResumes = async (page = 1, limit = 10) => {
+  try {
+    const response = await apiClient.get('/api/resumes', {
+      params: { page, limit }
+    });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch resumes:', error);
@@ -156,24 +224,14 @@ export const getResumes = async (page = 1, limit = 10, status) => {
   }
 };
 
-export const getResumeById = async (resumeId) => {
-  try {
-    const response = await apiClient.get(`/api/resumes/${resumeId}`);
-    return response.data.data;
-  } catch (error) {
-    console.error('Failed to fetch resume:', error);
-    throw new Error(`Failed to load resume: ${error.message}`);
-  }
-};
-
-export const createResume = async (title, content, templateId) => {
+export const createResume = async (title, content, templateId = null) => {
   try {
     const response = await apiClient.post('/api/resumes', {
       title,
       content,
       templateId
     });
-    return response.data.data;
+    return response.data.data.resume;
   } catch (error) {
     console.error('Failed to create resume:', error);
     throw new Error(`Failed to create resume: ${error.message}`);
@@ -182,7 +240,7 @@ export const createResume = async (title, content, templateId) => {
 
 export const updateResume = async (resumeId, updates) => {
   try {
-    const response = await apiClient.patch(`/api/resumes/${resumeId}`, updates);
+    const response = await apiClient.put(`/api/resumes/${resumeId}`, updates);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update resume:', error);
@@ -193,7 +251,7 @@ export const updateResume = async (resumeId, updates) => {
 export const deleteResume = async (resumeId) => {
   try {
     const response = await apiClient.delete(`/api/resumes/${resumeId}`);
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error('Failed to delete resume:', error);
     throw new Error(`Failed to delete resume: ${error.message}`);

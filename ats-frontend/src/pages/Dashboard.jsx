@@ -10,6 +10,8 @@ import AnalysisResults from '../components/AnalysisResults';
 import ResumeList from '../components/ResumeList';
 import ResumeForm from '../components/ResumeForm';
 import ResumeDetail from '../components/ResumeDetail';
+import AnalysisHistory from '../components/AnalysisHistory';
+import JobDescriptionManager from '../components/JobDescriptionManager';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SettingsPanel from '../components/SettingsPanel';
@@ -60,7 +62,7 @@ const Dashboard = () => {
   });
 
   // Resume Management state
-  const [currentView, setCurrentView] = useState('analysis'); // 'analysis', 'resumes', 'resume-detail', 'resume-form'
+  const [currentView, setCurrentView] = useState('analysis'); // 'analysis', 'resumes', 'history', 'resume-detail', 'resume-form'
   const [selectedResume, setSelectedResume] = useState(null);
   const [editingResume, setEditingResume] = useState(null);
 
@@ -218,11 +220,31 @@ const Dashboard = () => {
     setAnalysisResult(null);
 
     try {
+      // Extract job title from the job description - look for common patterns
+      const extractJobTitle = (jd) => {
+        const lines = jd.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        // Look for lines that might be job titles (short, title case, etc.)
+        for (const line of lines.slice(0, 5)) {
+          if (line.length > 3 && line.length < 100 && 
+              (line.includes('Engineer') || line.includes('Developer') || line.includes('Manager') || 
+               line.includes('Analyst') || line.includes('Specialist') || line.includes('Director') ||
+               line.includes('Senior') || line.includes('Lead') || line.includes('Principal'))) {
+            return line;
+          }
+        }
+        
+        // Fallback to first non-empty line
+        return lines[0] || 'Untitled Position';
+      };
+      
+      const jobTitle = extractJobTitle(jobDescription);
       const result = await analyzeResume(
         resumeFile,
         jobDescription,
         showModelSelector ? selectedModel : null,
-        modelParameters
+        modelParameters,
+        jobTitle
       );
       setAnalysisResult(result);
     } catch (err) {
@@ -377,6 +399,16 @@ const Dashboard = () => {
             >
               Resume Management
             </button>
+            <button
+              onClick={() => setCurrentView('history')}
+              className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                currentView === 'history'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
+              }`}
+            >
+              History & Management
+            </button>
           </div>
         </div>
 
@@ -496,6 +528,15 @@ const Dashboard = () => {
             onSave={handleSaveResume}
             onCancel={() => setCurrentView('resumes')}
           />
+        )}
+
+        {currentView === 'history' && (
+          <div className="space-y-8">
+            <AnalysisHistory />
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <JobDescriptionManager />
+            </div>
+          </div>
         )}
 
         {/* Footer */}
