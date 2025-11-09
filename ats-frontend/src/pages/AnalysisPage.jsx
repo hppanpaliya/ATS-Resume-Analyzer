@@ -116,10 +116,10 @@ const AnalysisPage = () => {
 
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-8 space-y-4 sm:space-y-0">
           <button
             onClick={handleBackToDashboard}
-            className="flex items-center space-x-3 px-4 py-2 glass rounded-xl hover:bg-white/10 transition-all duration-300"
+            className="flex items-center space-x-3 px-4 py-2 glass rounded-xl hover:bg-white/10 transition-all duration-300 self-start sm:self-auto"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -127,16 +127,16 @@ const AnalysisPage = () => {
             <span>Back to Dashboard</span>
           </button>
 
-          <div className="text-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+          <div className="text-center flex-1 sm:flex-none">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
               Analysis Results
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
               Detailed ATS compatibility analysis
             </p>
           </div>
 
-          <div className="w-32"></div> {/* Spacer for centering */}
+          <div className="hidden sm:block w-32"></div> {/* Spacer for centering on desktop */}
         </div>
 
         {/* Analysis Content */}

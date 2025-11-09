@@ -60,8 +60,8 @@ const AnalysisHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Analysis History</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Analysis History</h2>
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {analyses.length} analyses
         </div>

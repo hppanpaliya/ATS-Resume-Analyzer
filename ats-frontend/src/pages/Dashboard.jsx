@@ -319,51 +319,51 @@ const Dashboard = () => {
         toggleTheme={toggleTheme}
       />
 
-      <div className="container mx-auto px-4 py-8 relative z-10 fade-in">
+      <div className="container mx-auto px-4 py-8 pb-24 sm:pb-8 relative z-10 fade-in">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="glass-strong rounded-3xl p-8 mx-auto max-w-4xl hover-glass">
-            <div className="flex items-center justify-between mb-4">
+          <div className="glass-strong rounded-3xl p-4 sm:p-8 mx-auto max-w-4xl hover-glass">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-4 sm:space-y-0">
               <div className="flex items-center">
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-2xl mr-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 sm:p-3 rounded-2xl mr-3 sm:mr-4">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
                   ATS Resume Analyzer
                 </h1>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                className="px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm sm:text-base whitespace-nowrap"
               >
                 Logout
               </button>
             </div>
-            <p className="text-xl text-gray-700 dark:text-gray-300 font-light">
+            <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 font-light">
               Get AI-powered insights on how well your resume matches the job description
             </p>
-            <div className="mt-6 flex justify-center space-x-4 flex-wrap">
+                        <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 flex-wrap">
               {/* Connection Status */}
-              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+              <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
                 <div className={`w-2 h-2 ${connectionInfo.color} rounded-full ${connectionStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{connectionInfo.text}</span>
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{connectionInfo.text}</span>
               </div>
 
-              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+              <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">AI-Powered Analysis</span>
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">AI-Powered Analysis</span>
               </div>
-              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+              <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-500"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Instant Results</span>
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Instant Results</span>
               </div>
               {showModelSelector && (
-                <div className="flex items-center space-x-2 glass px-4 py-2 rounded-full">
+                <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse delay-1000"></div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Dynamic AI Models</span>
+                  <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Dynamic AI Models</span>
                 </div>
               )}
             </div>
@@ -382,8 +382,55 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex justify-center mb-8">
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2">
+            <div className="flex justify-around items-center max-w-md mx-auto">
+              <button
+                onClick={() => setCurrentView('analysis')}
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  currentView === 'analysis'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-xs font-medium">Analyze</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('resumes')}
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  currentView === 'resumes'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="text-xs font-medium">Resumes</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('history')}
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  currentView === 'history'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-medium">History</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Navigation Tabs */}
+        <div className="hidden sm:flex justify-center mb-8">
           <div className="glass-strong rounded-2xl p-2 flex space-x-2">
             <button
               onClick={() => setCurrentView('analysis')}
@@ -393,6 +440,9 @@ const Dashboard = () => {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
+              <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
               ATS Analysis
             </button>
             <button
@@ -403,6 +453,9 @@ const Dashboard = () => {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
+              <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
               Resume Management
             </button>
             <button
@@ -413,6 +466,9 @@ const Dashboard = () => {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
             >
+              <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               History & Management
             </button>
           </div>

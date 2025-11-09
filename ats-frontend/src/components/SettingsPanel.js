@@ -44,7 +44,7 @@ const SettingsPanel = ({
           />
           
           {/* Settings Panel */}
-          <div className="fixed top-12 right-20 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
+          <div className="fixed top-12 right-4 sm:right-20 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
             <div className="glass-strong rounded-3xl p-6 border border-white/25 shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">

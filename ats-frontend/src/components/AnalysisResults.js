@@ -47,7 +47,7 @@ const AnalysisResults = ({ results }) => {
         </div>
         
         {/* Score breakdown preview */}
-        <div className="mt-8 grid grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="text-center p-4 glass rounded-2xl">
             <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
               {results.skillsAnalysis?.matchedKeywords?.length || 0}
