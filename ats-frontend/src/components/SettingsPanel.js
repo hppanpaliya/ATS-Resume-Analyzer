@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 const SettingsPanel = ({ 
   showModelSelector, 
   onToggleModelSelector, 
-  onReset 
+  onReset,
+  theme,
+  toggleTheme
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +21,7 @@ const SettingsPanel = ({
       {/* Settings Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-20 right-6 z-40 p-3 glass rounded-full transition-all duration-200 hover:scale-105 group"
+        className="fixed top-12 right-6 z-40 p-3 glass rounded-full transition-all duration-200 hover:scale-105 group"
         aria-label="Open settings"
       >
         <svg 
@@ -42,7 +44,7 @@ const SettingsPanel = ({
           />
           
           {/* Settings Panel */}
-          <div className="fixed top-20 right-20 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
+          <div className="fixed top-12 right-20 w-80 max-w-[calc(100vw-2rem)] z-40 slide-up">
             <div className="glass-strong rounded-3xl p-6 border border-white/25 shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
@@ -110,6 +112,34 @@ const SettingsPanel = ({
                       Using default model: Gemini 2.0 Flash
                     </p>
                   )}
+                </div>
+
+                {/* Theme Toggle */}
+                <div className="p-4 glass rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                        {theme === 'dark' ? '🌙' : '☀️'} Theme
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Switch between light and dark mode
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleTheme}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                        theme === 'dark' 
+                          ? 'bg-purple-600' 
+                          : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Divider */}

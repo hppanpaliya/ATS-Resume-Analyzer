@@ -3,9 +3,9 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AnalysisResults from '../components/AnalysisResults';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import ThemeToggle from '../components/ThemeToggle';
 import useTheme from '../hooks/useTheme';
 import { getAnalysisById } from '../services/api';
+import SettingsPanel from '../components/SettingsPanel';
 
 const AnalysisPage = () => {
   const { id } = useParams();
@@ -16,6 +16,7 @@ const AnalysisPage = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -66,7 +67,16 @@ const AnalysisPage = () => {
   if (error) {
     return (
       <div className="min-h-screen animated-bg paper-texture">
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+        <SettingsPanel
+          showModelSelector={showModelSelector}
+          onToggleModelSelector={() => setShowModelSelector(!showModelSelector)}
+          onReset={() => {
+            setShowModelSelector(false);
+            // Add other reset logic if needed
+          }}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <ErrorMessage message={error} />
@@ -93,7 +103,16 @@ const AnalysisPage = () => {
         <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-xl animate-pulse delay-2000"></div>
       </div>
 
-      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      <SettingsPanel
+        showModelSelector={showModelSelector}
+        onToggleModelSelector={() => setShowModelSelector(!showModelSelector)}
+        onReset={() => {
+          setShowModelSelector(false);
+          // Add other reset logic if needed
+        }}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
 
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Header */}

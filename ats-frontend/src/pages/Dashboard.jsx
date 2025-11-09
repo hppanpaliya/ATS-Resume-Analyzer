@@ -15,7 +15,6 @@ import JobDescriptionManager from '../components/JobDescriptionManager';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SettingsPanel from '../components/SettingsPanel';
-import ThemeToggle from '../components/ThemeToggle';
 import useTheme from '../hooks/useTheme';
 
 const Dashboard = () => {
@@ -312,11 +311,12 @@ const Dashboard = () => {
         <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-xl animate-pulse delay-2000"></div>
       </div>
 
-      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       <SettingsPanel
         showModelSelector={showModelSelector}
         onToggleModelSelector={handleToggleModelSelector}
         onReset={handleResetSettings}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       <div className="container mx-auto px-4 py-8 relative z-10 fade-in">
