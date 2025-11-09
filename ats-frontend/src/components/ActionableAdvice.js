@@ -95,10 +95,10 @@ const ActionableAdvice = ({ advice }) => {
                     </div>
                     <button
                       onClick={() => toggleCompleted(idx)}
-                      className={`w-6 h-6 rounded border-2 transition-all duration-200 ${
+                      className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center ${
                         isCompleted
                           ? 'bg-green-500 border-green-500 text-white'
-                          : 'border-gray-300 dark:border-gray-600 hover:border-green-400 dark:hover:border-green-500'
+                          : 'border-gray-400 dark:border-gray-400 hover:border-green-400 dark:hover:border-green-500 bg-white dark:bg-gray-800'
                       }`}
                     >
                       {isCompleted && (

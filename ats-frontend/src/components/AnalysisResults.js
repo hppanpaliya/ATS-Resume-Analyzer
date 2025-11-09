@@ -50,7 +50,7 @@ const AnalysisResults = ({ results }) => {
         <div className="mt-8 grid grid-cols-3 gap-4">
           <div className="text-center p-4 glass rounded-2xl">
             <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
-              {results.keywordMatch?.matchedKeywords?.length || 0}
+              {results.skillsAnalysis?.matchedKeywords?.length || 0}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Keywords Found</div>
           </div>
@@ -69,7 +69,7 @@ const AnalysisResults = ({ results }) => {
         </div>
       </div>
 
-      <KeywordAnalysis analysis={results.keywordMatch} />
+      <KeywordAnalysis analysis={results.skillsAnalysis} />
       <ExperienceRelevance relevance={results.experienceRelevance} />
       <FormattingScore formatting={results.formattingScore} />
       <ActionableAdvice advice={results.actionableAdvice} />

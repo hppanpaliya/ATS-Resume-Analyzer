@@ -92,33 +92,37 @@ export class AIService {
     ) {
         const model = selectedModel || DEFAULT_MODEL;
 
-        const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume against the job description and provide a detailed assessment.
+        const prompt = `You are an expert ATS (Applicant Tracking System) analyzer, specializing in providing feedback for university students in technical fields. Analyze the following resume against the job description and provide a detailed assessment based on career advising best practices.
+
 
 Resume Text:
 ${text}
 
+
 Job Description:
 ${jobDescription}
+
 
 Please provide a comprehensive analysis in the following JSON format:
 {
   "overallScore": <number 0-100>,
-  "keywordMatch": {
+  "skillsAnalysis": {
     "score": <number 0-100>,
-    "matchedKeywords": [<array of matched keywords>],
-    "missingKeywords": [<array of important missing keywords>]
+    "matchedKeywords": [<array of matched keywords from the job description>],
+    "missingKeywords": [<array of important missing keywords>],
+    "recommendations": [<array of suggestions for the skills section>]
   },
   "formattingScore": {
     "score": <number 0-100>,
-    "issues": [<array of formatting issues>],
-    "suggestions": [<array of formatting suggestions>]
+    "issues": [<array of specific formatting issues found>],
+    "suggestions": [<array of concrete suggestions for how to fix the issues>]
   },
   "experienceRelevance": {
     "score": <number 0-100>,
-    "relevantExperience": <string describing relevant experience>,
+    "relevantExperience": <string describing how the candidate's experience aligns with the role>,
     "gaps": [<array of experience gaps>]
   },
-  "actionableAdvice": [<array of specific actionable recommendations>],
+  "actionableAdvice": [<array of specific, actionable recommendations for the candidate>],
   "modelUsed": {
     "id": "${model}",
     "name": "<model display name>",
@@ -126,14 +130,22 @@ Please provide a comprehensive analysis in the following JSON format:
   }
 }
 
-Focus on:
-1. Keyword optimization for ATS systems
-2. Resume formatting and structure
-3. Experience relevance to the job
-4. Specific, actionable improvements
-5. Overall ATS compatibility score
 
-Be thorough but concise. Provide specific examples and actionable advice.`;
+Focus on these rules:
+1.  **Skills and Keyword Optimization**: In the skillsAnalysis, identify keywords. In the recommendations for that section, check if there is a "Technical Skills" section. If there is also a general "Skills" section, recommend combining them into a single, well-organized "Technical Skills" section as per university guidelines.
+
+2.  **Quantify Achievements Carefully**: When providing advice in actionableAdvice to quantify results (e.g., "improved speed by X%"), you MUST include the following stipulation: **"Only add metrics if they are accurate and you can explain how you arrived at the number. Do not invent data, as this can be problematic in the hiring process."**
+
+3.  **Summary/Objective Statements**: In actionableAdvice, check for a "Summary" or "Objective" section. If the resume appears to be for an undergraduate student, recommend removing it to keep the resume to a single page, which is standard practice.
+
+4.  **Formatting**: In the formattingScore, be specific. For every issue listed in issues, provide a corresponding suggestion in suggestions.
+
+5.  **Experience Relevance**: Analyze how the candidate's experience connects to the job description, highlighting both strengths and areas that are not covered.
+
+6.  **Overall Score**: The overallScore should reflect the resume's overall ATS compatibility and readiness for the application.
+
+Be thorough but concise. Provide specific examples and actionable advice based on the rules above.
+`;
 
         try {
             // Build completion parameters with defaults and user overrides
@@ -174,7 +186,7 @@ Be thorough but concise. Provide specific examples and actionable advice.`;
             const analysisResult = JSON.parse(jsonString);
 
             // Ensure the response has the expected structure
-            if (!analysisResult.overallScore || !analysisResult.keywordMatch || !analysisResult.formattingScore) {
+            if (!analysisResult.overallScore || !analysisResult.skillsAnalysis || !analysisResult.formattingScore) {
                 throw new Error('Invalid response format from AI model');
             }
 

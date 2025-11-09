@@ -50,7 +50,7 @@ const JobDescriptionInput = ({ value, onChange }) => {
           </button>
 
           {showDropdown && (
-            <div className="absolute z-10 w-full mt-1 glass-strong rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        <div className="absolute z-10 w-full mt-1 dropdown-glass rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {savedJobs.map((job) => (
                 <button
                   key={job.id}
