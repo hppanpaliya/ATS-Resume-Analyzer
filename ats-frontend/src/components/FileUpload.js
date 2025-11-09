@@ -39,10 +39,10 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
   };
 
   return (
-    <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-200 gpu-optimized">
-      <h2 className="text-2xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
+    <div className="glass-strong rounded-3xl p-4 sm:p-8 hover-glass transition-all duration-200 gpu-optimized">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center text-gray-900 dark:text-white">
         <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-xl mr-3 gpu-optimized">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -50,7 +50,7 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
         Upload Resume
       </h2>
       <div
-        className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 gpu-optimized ${
+        className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all duration-200 gpu-optimized ${
           dragActive 
             ? 'dropzone-active border-purple-400 dark:border-purple-300 bg-purple-50/20 dark:bg-purple-900/20' 
             : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-300 glass'
@@ -69,32 +69,32 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
         />
         <label htmlFor="resume-upload" className="cursor-pointer">
           <div className="relative gpu-optimized">
-            <svg className="w-16 h-16 mx-auto mb-6 text-purple-400 dark:text-purple-300 transition-transform duration-200 hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-purple-400 dark:text-purple-300 transition-transform duration-200 hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center gpu-optimized">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center gpu-optimized">
+              <svg className="w-2 h-2 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
               </svg>
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 sm:mb-3">
             Drop your resume here
           </h3>
-          <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
+          <p className="text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 text-base sm:text-lg">
             or click to browse your files
           </p>
-          <div className="flex justify-center space-x-4 mb-4">
-            <span className="keyword-badge px-4 py-2 bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+          <div className="flex justify-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
+            <span className="keyword-badge px-3 sm:px-4 py-2 bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs sm:text-sm font-medium">
               PDF
             </span>
-            <span className="keyword-badge px-4 py-2 bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+            <span className="keyword-badge px-3 sm:px-4 py-2 bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs sm:text-sm font-medium">
               DOCX
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Maximum file size: 10MB
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            Maximum file size: 3MB
           </p>
         </label>
         

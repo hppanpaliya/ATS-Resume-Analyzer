@@ -85,58 +85,61 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
         <button
           onClick={onBack}
-          className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+          className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors self-start"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Resumes
         </button>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
           <button
             onClick={() => handleExport('pdf')}
-            className="flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
             title="Export as PDF"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             PDF
           </button>
           <button
             onClick={() => handleExport('word')}
-            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
             title="Export as Word"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Word
           </button>
           <button
             onClick={() => onEdit(initialResume)}
-            className="btn-glass text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+            className="btn-glass text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
           >
-            <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit Resume
+            Edit
           </button>
         </div>
       </div>
 
       {/* Resume Header */}
-      <div className="glass-strong rounded-3xl p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="glass-strong rounded-3xl p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 space-y-4 sm:space-y-0">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {initialResume.title}
             </h1>
-            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
               <span>Created {formatDate(initialResume.createdAt)}</span>
+              {initialResume.updatedAt !== initialResume.createdAt && (
+                <span className="hidden sm:inline">•</span>
+              )}
               {initialResume.updatedAt !== initialResume.createdAt && (
                 <span>Updated {formatDate(initialResume.updatedAt)}</span>
               )}
@@ -150,7 +153,7 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
             </div>
           </div>
           {initialResume.templateId && (
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <div className="text-sm text-gray-600 dark:text-gray-400">Template</div>
               <div className="font-medium text-gray-900 dark:text-white capitalize">
                 {initialResume.templateId}
@@ -168,8 +171,8 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
       </div>
 
       {/* Analysis Section */}
-      <div className="glass-strong rounded-3xl p-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+      <div className="glass-strong rounded-3xl p-6 sm:p-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Resume Analysis
         </h2>
 
@@ -184,8 +187,8 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 placeholder="Paste the job description you want to analyze this resume against..."
-                rows={8}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
+                rows={6}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white resize-vertical"
               />
             </div>
 
@@ -195,7 +198,7 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing || !jobDescription.trim()}
-                className="btn-glass text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-glass text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {analyzing ? (
                   <div className="flex items-center">
@@ -204,7 +207,7 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
                   </div>
                 ) : (
                   <div className="flex items-center">
-                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     Analyze Resume Match
@@ -215,13 +218,13 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
           </div>
         ) : (
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                 Analysis Results
               </h3>
               <button
                 onClick={() => setShowAnalysis(false)}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors self-start sm:self-auto"
               >
                 Analyze Different Job
               </button>

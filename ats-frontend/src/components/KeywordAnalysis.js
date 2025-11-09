@@ -11,11 +11,11 @@ const KeywordAnalysis = ({ analysis }) => {
   const totalCount = foundCount + missingCount;
 
   return (
-    <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300 slide-up">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
+    <div className="glass-strong rounded-3xl p-4 sm:p-8 hover-glass transition-all duration-300 slide-up">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-xl mr-3">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
             </svg>
@@ -24,20 +24,18 @@ const KeywordAnalysis = ({ analysis }) => {
         </h3>
         
         {/* Statistics */}
-        <div className="flex items-center space-x-4">
-          <div className="glass px-4 py-2 rounded-full">
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              Match Rate: <span className="font-bold text-blue-500">{totalCount > 0 ? Math.round((foundCount / totalCount) * 100) : 0}%</span>
-            </span>
-          </div>
+        <div className="glass px-3 sm:px-4 py-2 rounded-full self-start sm:self-auto">
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+            Match Rate: <span className="font-bold text-blue-500">{totalCount > 0 ? Math.round((foundCount / totalCount) * 100) : 0}%</span>
+          </span>
         </div>
       </div>
       
       {/* Tab Navigation */}
-      <div className="flex space-x-2 mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 mb-4 sm:mb-6">
         <button
           onClick={() => setActiveTab('found')}
-          className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+          className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-300 text-sm sm:text-base ${
             activeTab === 'found'
               ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
               : 'glass text-gray-600 dark:text-gray-300 hover:bg-green-100/20 dark:hover:bg-green-900/20'
@@ -47,7 +45,7 @@ const KeywordAnalysis = ({ analysis }) => {
         </button>
         <button
           onClick={() => setActiveTab('missing')}
-          className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+          className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-300 text-sm sm:text-base ${
             activeTab === 'missing'
               ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
               : 'glass text-gray-600 dark:text-gray-300 hover:bg-red-100/20 dark:hover:bg-red-900/20'
@@ -57,7 +55,7 @@ const KeywordAnalysis = ({ analysis }) => {
         </button>
         <button
           onClick={() => setActiveTab('recommendations')}
-          className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+          className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-300 text-sm sm:text-base ${
             activeTab === 'recommendations'
               ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
               : 'glass text-gray-600 dark:text-gray-300 hover:bg-blue-100/20 dark:hover:bg-blue-900/20'
