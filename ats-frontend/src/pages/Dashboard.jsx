@@ -175,40 +175,6 @@ const Dashboard = () => {
     }
   }, [selectedModel]);
 
-  // Persist model parameters to localStorage
-  useEffect(() => {
-    try {
-      if (typeof Storage !== 'undefined') {
-        console.log('Saving model parameters:', modelParameters);
-        localStorage.setItem('modelParameters', JSON.stringify(modelParameters));
-      }
-    } catch (err) {
-      console.error('Failed to save model parameters:', err);
-    }
-  }, [modelParameters]);
-
-  // Load model parameters from localStorage on mount
-  useEffect(() => {
-    try {
-      if (typeof Storage !== 'undefined') {
-        const savedParameters = localStorage.getItem('modelParameters');
-        if (savedParameters) {
-          const parsedParameters = JSON.parse(savedParameters);
-          console.log('Loading saved model parameters:', parsedParameters);
-          setModelParameters({
-            temperature: parsedParameters.temperature ?? 0.15,
-            max_tokens: parsedParameters.max_tokens ?? 4000,
-            include_reasoning: parsedParameters.include_reasoning ?? false
-          });
-        } else {
-          console.log('No saved model parameters found');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load saved parameters:', err);
-    }
-  }, []);
-
   const handleModelParametersChange = useCallback((newParameters) => {
     setModelParameters(newParameters);
     if (analysisResult) {

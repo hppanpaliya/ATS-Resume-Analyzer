@@ -5,10 +5,49 @@ const ModelParameters = ({
   onParametersChange,
   disabled = false 
 }) => {
-  const [localParameters, setLocalParameters] = useState(parameters);
+  const [localParameters, setLocalParameters] = useState(() => {
+    // Load from localStorage on initial render
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('modelParameters');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return {
+            temperature: parsed.temperature ?? 0.15,
+            max_tokens: parsed.max_tokens ?? 4000,
+            include_reasoning: parsed.include_reasoning ?? false,
+            ...parameters // Override with props if provided
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load saved model parameters:', err);
+    }
+    return {
+      temperature: 0.15,
+      max_tokens: 4000,
+      include_reasoning: false,
+      ...parameters
+    };
+  });
 
+  // Save to localStorage whenever localParameters change
   useEffect(() => {
-    setLocalParameters(parameters);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('modelParameters', JSON.stringify(localParameters));
+      }
+    } catch (err) {
+      console.error('Failed to save model parameters:', err);
+    }
+  }, [localParameters]);
+
+  // Update local state when props change (for external updates)
+  useEffect(() => {
+    setLocalParameters(prev => ({
+      ...prev,
+      ...parameters
+    }));
   }, [parameters]);
 
   const handleParameterChange = (paramName, value) => {
