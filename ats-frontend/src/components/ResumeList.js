@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getResumes, deleteResume } from '../services/api';
+import { getResumes, deleteResume, downloadResumeFile } from '../services/api';
+import { Download } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -46,6 +47,15 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
       setError(err.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDownloadOriginal = async (resume, e) => {
+    e.stopPropagation();
+    try {
+      await downloadResumeFile(resume.id, resume.originalFileName || `resume-${resume.id}`);
+    } catch (err) {
+      setError(`Failed to download original file: ${err.message}`);
     }
   };
 
@@ -130,6 +140,15 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
+                  {resume.originalFileId && (
+                    <button
+                      onClick={(e) => handleDownloadOriginal(resume, e)}
+                      className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200"
+                      title="Download original file"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => handleDelete(resume.id, e)}
                     disabled={deletingId === resume.id}

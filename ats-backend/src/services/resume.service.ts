@@ -1,17 +1,59 @@
 import { PrismaClient } from '@prisma/client';
+import { FileStorageService } from './file-storage.service';
+import { ResumeFileService, ResumeFileData } from './resume-file.service';
 
 const prisma = new PrismaClient();
 
 export class ResumeService {
-  async createResume(userId: string, title: string, content: any, templateId?: string) {
+  private fileStorage?: FileStorageService;
+  private resumeFileService?: ResumeFileService;
+
+  constructor(
+    fileStorage?: FileStorageService,
+    resumeFileService?: ResumeFileService
+  ) {
+    this.fileStorage = fileStorage;
+    this.resumeFileService = resumeFileService;
+  }
+
+  async createResume(
+    userId: string,
+    title: string,
+    content?: any,
+    templateId?: string,
+    fileData?: ResumeFileData
+  ) {
+    const resumeData: any = {
+      userId,
+      title,
+      templateId,
+      status: 'draft',
+    };
+
+    // Handle different content types
+    if (fileData) {
+      // File-based resume
+      resumeData.structuredData = fileData.structuredData ? JSON.stringify(fileData.structuredData) : null;
+      resumeData.extractedText = fileData.processedContent.text;
+      resumeData.originalFileId = fileData.originalFile.id;
+      resumeData.originalFileName = fileData.originalFile.originalName;
+      resumeData.originalFileSize = fileData.originalFile.size;
+      resumeData.originalFileType = fileData.originalFile.mimeType;
+      resumeData.fileProcessedAt = new Date();
+    } else if (content) {
+      // Text-based resume (legacy support)
+      if (typeof content === 'string') {
+        resumeData.content = content;
+        resumeData.extractedText = content;
+      } else {
+        // Structured data
+        resumeData.structuredData = JSON.stringify(content);
+        resumeData.extractedText = this.extractTextFromStructuredData(content);
+      }
+    }
+
     const resume = await prisma.resume.create({
-      data: {
-        userId,
-        title,
-        content,
-        templateId,
-        status: 'draft',
-      },
+      data: resumeData,
     });
 
     // Increment user's resume count
@@ -21,6 +63,78 @@ export class ResumeService {
     });
 
     return resume;
+  }
+
+  async createResumeFromFile(
+    userId: string,
+    title: string,
+    file: Express.Multer.File,
+    templateId?: string
+  ) {
+    if (!this.resumeFileService) {
+      throw new Error('ResumeFileService not initialized');
+    }
+
+    const fileData = await this.resumeFileService.processResumeFile(file, userId);
+    return this.createResume(userId, title, undefined, templateId, fileData);
+  }
+
+  async createResumeFromText(
+    userId: string,
+    title: string,
+    content: string | object,
+    templateId?: string
+  ) {
+    return this.createResume(userId, title, content, templateId);
+  }
+
+  async createResumeFromStructuredData(
+    userId: string,
+    title: string,
+    structuredData: object,
+    templateId?: string
+  ) {
+    return this.createResume(userId, title, structuredData, templateId);
+  }
+
+  private extractTextFromStructuredData(data: any): string {
+    // Extract readable text from structured resume data
+    const sections: string[] = [];
+
+    if (data.personalInfo) {
+      const { fullName, email, phone, location } = data.personalInfo;
+      sections.push(`${fullName || 'Name'}`);
+      if (email) sections.push(`Email: ${email}`);
+      if (phone) sections.push(`Phone: ${phone}`);
+      if (location) sections.push(`Location: ${location}`);
+    }
+
+    if (data.summary) {
+      sections.push(`SUMMARY\n${data.summary}`);
+    }
+
+    if (data.experience && Array.isArray(data.experience)) {
+      sections.push('EXPERIENCE');
+      data.experience.forEach((exp: any) => {
+        sections.push(`${exp.position || 'Position'} at ${exp.company || 'Company'}`);
+        sections.push(`${exp.startDate || 'Start'} - ${exp.endDate || 'Present'}`);
+        if (exp.description) sections.push(exp.description);
+      });
+    }
+
+    if (data.education && Array.isArray(data.education)) {
+      sections.push('EDUCATION');
+      data.education.forEach((edu: any) => {
+        sections.push(`${edu.degree || 'Degree'} from ${edu.school || 'School'}`);
+        if (edu.graduationDate) sections.push(`Graduated: ${edu.graduationDate}`);
+      });
+    }
+
+    if (data.skills && Array.isArray(data.skills)) {
+      sections.push(`SKILLS\n${data.skills.join(', ')}`);
+    }
+
+    return sections.join('\n\n');
   }
 
   async getResumes(userId: string, page = 1, limit = 10, status?: string) {
@@ -41,12 +155,21 @@ export class ResumeService {
         skip,
         take: limit,
         orderBy: { updatedAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          originalFileId: true,
+          originalFileName: true,
+          originalFileSize: true,
+          originalFileType: true,
           template: {
             select: { id: true, name: true, category: true },
           },
         },
-      }),
+      }) as any,
       prisma.resume.count({ where }),
     ]);
 
@@ -83,7 +206,73 @@ export class ResumeService {
       data: { lastAccessedAt: new Date() },
     });
 
-    return resume;
+    // Parse structured data if it exists
+    let structuredData = null;
+    if ((resume as any).structuredData) {
+      try {
+        structuredData = JSON.parse((resume as any).structuredData);
+      } catch (error) {
+        console.error('Error parsing structured data:', error);
+      }
+    }
+
+    return {
+      ...resume,
+      structuredData,
+      // For backward compatibility, provide content field
+      content: resume.content || resume.extractedText || this.extractTextFromStructuredData(structuredData),
+    };
+  }
+
+  async getResumeFile(resumeId: string, userId: string): Promise<Buffer | null> {
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId,
+        deletedAt: null,
+        originalFileId: { not: null },
+      } as any,
+    }) as any;
+
+    if (!resume || !resume.originalFileId) {
+      return null;
+    }
+
+    if (!this.resumeFileService) {
+      throw new Error('ResumeFileService not initialized');
+    }
+
+    return this.resumeFileService.getResumeFile(resume.originalFileId, userId);
+  }
+
+  async getResumeFileMetadata(resumeId: string, userId: string) {
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId,
+        deletedAt: null,
+        originalFileId: { not: null },
+      } as any,
+    }) as any;
+
+    if (!resume || !resume.originalFileId) {
+      return null;
+    }
+
+    if (!this.resumeFileService) {
+      throw new Error('ResumeFileService not initialized');
+    }
+
+    const fileMetadata = await this.resumeFileService.getResumeFileMetadata(resume.originalFileId, userId);
+    if (!fileMetadata) {
+      return null;
+    }
+
+    return {
+      ...fileMetadata,
+      resumeId,
+      resumeTitle: resume.title,
+    };
   }
 
   async updateResume(resumeId: string, userId: string, data: any) {
@@ -268,7 +457,16 @@ export class ResumeService {
         throw new Error('Resume not found');
       }
 
-      const structuredResume = JSON.parse(resume.content);
+      // Get structured data - prefer structuredData field, fallback to content
+      let structuredResume;
+      if ((resume as any).structuredData) {
+        structuredResume = JSON.parse((resume as any).structuredData);
+      } else if (resume.content) {
+        structuredResume = JSON.parse(resume.content);
+      } else {
+        throw new Error('Resume has no structured data');
+      }
+
       const { personalInfo, summary, experience, education, skills, certifications, projects } = structuredResume;
 
       const { Document, Packer, Paragraph, TextRun, AlignmentType } = require('docx');

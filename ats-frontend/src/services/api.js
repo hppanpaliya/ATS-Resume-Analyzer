@@ -238,6 +238,41 @@ export const createResume = async (title, content, templateId = null) => {
   }
 };
 
+export const createResumeFromFile = async (title, file, templateId = null) => {
+  try {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('resume', file);
+    if (templateId) {
+      formData.append('templateId', templateId);
+    }
+
+    const response = await apiClient.post('/api/resumes', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data.data.resume;
+  } catch (error) {
+    console.error('Failed to create resume from file:', error);
+    throw new Error(`Failed to create resume from file: ${error.message}`);
+  }
+};
+
+export const createResumeFromStructuredData = async (title, structuredData, templateId = null) => {
+  try {
+    const response = await apiClient.post('/api/resumes', {
+      title,
+      structuredData: JSON.stringify(structuredData),
+      templateId
+    });
+    return response.data.data.resume;
+  } catch (error) {
+    console.error('Failed to create resume from structured data:', error);
+    throw new Error(`Failed to create resume from structured data: ${error.message}`);
+  }
+};
+
 export const updateResume = async (resumeId, updates) => {
   try {
     const response = await apiClient.put(`/api/resumes/${resumeId}`, updates);
@@ -265,6 +300,60 @@ export const checkHealth = async () => {
     return response.data;
   } catch (error) {
     throw new Error('Backend service unavailable');
+  }
+};
+
+// Resume file operations
+export const downloadResumeFile = async (resumeId, filename) => {
+  try {
+    const response = await apiClient.get(`/api/resumes/${resumeId}/file`, {
+      responseType: 'blob',
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename || `resume-${resumeId}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Failed to download resume file:', error);
+    throw new Error(`Failed to download resume file: ${error.message}`);
+  }
+};
+
+export const getResumeFileMetadata = async (resumeId) => {
+  try {
+    const response = await apiClient.get(`/api/resumes/${resumeId}/file/metadata`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to get resume file metadata:', error);
+    throw new Error(`Failed to get resume file metadata: ${error.message}`);
+  }
+};
+
+// Template operations
+export const getTemplates = async (category = null) => {
+  try {
+    const params = category ? { category } : {};
+    const response = await apiClient.get('/api/templates', { params });
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to fetch templates:', error);
+    throw new Error(`Failed to load templates: ${error.message}`);
+  }
+};
+
+export const getTemplateById = async (templateId) => {
+  try {
+    const response = await apiClient.get(`/api/templates/${templateId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Failed to fetch template:', error);
+    throw new Error(`Failed to load template: ${error.message}`);
   }
 };
 

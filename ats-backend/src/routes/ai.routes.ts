@@ -4,11 +4,20 @@ import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { AIService } from '../services/ai.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { FileStorageService } from '../services/file-storage.service';
+import { ResumeFileService } from '../services/resume-file.service';
 import { PrismaClient } from '@prisma/client';
 
 const router = Router();
 const aiService = new AIService();
 const prisma = new PrismaClient();
+
+// Initialize services
+const fileStorage = new FileStorageService();
+const resumeFileService = new ResumeFileService(fileStorage);
+
+// Initialize file storage
+fileStorage.initialize().catch(console.error);
 
 // Configure multer for file uploads (store in memory)
 const storage = multer.memoryStorage();
@@ -133,6 +142,9 @@ router.post('/analyze', authMiddleware, upload.single('resume'), async (req: Aut
         // Analyze with AI
         const analysisResult = await aiService.analyzeResume(text, jobDescription, selectedModel, modelParameters);
 
+        // Process and save the file
+        const fileData = await resumeFileService.processResumeFile(req.file, req.userId!);
+
         // Save to database in a transaction
         const savedData = await prisma.$transaction(async (tx) => {
             // Create or find job description
@@ -167,8 +179,13 @@ router.post('/analyze', authMiddleware, upload.single('resume'), async (req: Aut
                 data: {
                     userId: req.userId!,
                     title: `Resume for ${jobTitle}`,
-                    content: text,
-                    extractedText: text,
+                    structuredData: fileData.structuredData ? JSON.stringify(fileData.structuredData) : null,
+                    extractedText: fileData.processedContent.text,
+                    originalFileId: fileData.originalFile.id,
+                    originalFileName: fileData.originalFile.originalName,
+                    originalFileSize: fileData.originalFile.size,
+                    originalFileType: fileData.originalFile.mimeType,
+                    fileProcessedAt: new Date(),
                     status: 'analyzed'
                 }
             });
@@ -307,7 +324,14 @@ router.get('/analyses/:id', authMiddleware, async (req: AuthRequest, res) => {
             },
             include: {
                 resume: {
-                    select: { id: true, title: true, content: true, createdAt: true }
+                    select: { 
+                        id: true, 
+                        title: true, 
+                        content: true, 
+                        createdAt: true,
+                        originalFileName: true,
+                        originalFileId: true
+                    }
                 },
                 jobDescription: {
                     select: { id: true, title: true, company: true, description: true }

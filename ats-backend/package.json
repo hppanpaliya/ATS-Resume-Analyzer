@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "dev:watch": "nodemon --exec ts-node src/index.ts"
   },
   "keywords": [],
@@ -14,6 +14,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.17.0",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -29,12 +30,14 @@
     "pdf-parse": "^1.1.1",
     "prisma": "^6.17.0",
     "puppeteer": "^24.23.0",
+    "uuid": "^13.0.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/mime-types": "^3.0.1",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.7.0",
     "@types/pdf-parse": "^1.1.5",

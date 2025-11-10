@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { analyzeResume } from '../services/api';
+import { analyzeResume, downloadResumeFile } from '../services/api';
 import useAuthStore from '../stores/authStore';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
@@ -64,6 +64,14 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
     }
   };
 
+  const handleDownloadOriginal = async () => {
+    try {
+      await downloadResumeFile(initialResume.id, initialResume.originalFileName || `resume-${initialResume.id}`);
+    } catch (err) {
+      setError(`Failed to download original file: ${err.message}`);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -96,6 +104,18 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
           Back to Resumes
         </button>
         <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
+          {initialResume.originalFileId && (
+            <button
+              onClick={handleDownloadOriginal}
+              className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+              title="Download Original File"
+            >
+              <svg className="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Original
+            </button>
+          )}
           <button
             onClick={() => handleExport('pdf')}
             className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm"

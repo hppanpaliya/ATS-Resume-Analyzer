@@ -14,6 +14,8 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
   const [sortBy, setSortBy] = useState('created');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
+  const [isMobile, setIsMobile] = useState(false);
   
   // Default fallback model
   const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
@@ -63,6 +65,18 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
       fetchModels();
     }
   }, [disabled, fetchModels]);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768); // 768px is typical tablet breakpoint
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   // Context length filter options
   const contextLengthOptions = useMemo(() => [
@@ -133,6 +147,25 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
     setContextLengthFilter('all');
     setSortBy('created');
     setSortOrder('desc');
+  };
+
+  const toggleDescription = (modelId, event) => {
+    event.stopPropagation(); // Prevent model selection
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(modelId)) {
+        newSet.delete(modelId);
+      } else {
+        newSet.add(modelId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateDescription = (description) => {
+    const maxLength = isMobile ? 120 : 260;
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength).trim() + '...';
   };
 
   const formatDate = (timestamp) => {
@@ -341,17 +374,6 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
         </div>
       )}
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-3 bg-yellow-100/50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-2xl">
-          <div className="flex items-start space-x-2">
-            <svg className="w-4 h-4 text-yellow-600 dark:text-yellow-300 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">{error}</p>
-          </div>
-        </div>
-      )}
 
       {/* Current Selection Display */}
       {currentModel && (
@@ -391,7 +413,7 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
 
       {/* Model List */}
       {isExpanded && (
-        <div className="space-y-2 max-h-80 overflow-y-auto fade-in">
+        <div className="space-y-2 overflow-y-auto fade-in" style={{ maxHeight: '500px' }}>
           {loading && models.length > 0 && (
             <div className="text-center py-2">
               <div className="inline-flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
@@ -442,11 +464,28 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
                           <span className="text-xs">⭐</span>
                         )}
                       </div>
-                      <p className={`text-sm mb-2 ${
-                        isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {model.description}
-                      </p>
+                      <div className="text-sm mb-2">
+                        <p className={`${
+                          isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {expandedDescriptions.has(model.id) 
+                            ? model.description 
+                            : truncateDescription(model.description)
+                          }
+                        </p>
+                        {model.description.length > (isMobile ? 120 : 260) && (
+                          <button
+                            onClick={(e) => toggleDescription(model.id, e)}
+                            className={`text-xs mt-1 transition-colors duration-200 ${
+                              isSelected 
+                                ? 'text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300' 
+                                : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
+                            }`}
+                          >
+                            {expandedDescriptions.has(model.id) ? 'See less' : 'See more'}
+                          </button>
+                        )}
+                      </div>
                       <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                         <span>{model.provider}</span>
                         {model.context_length && (

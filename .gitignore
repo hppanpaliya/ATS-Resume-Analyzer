@@ -34,11 +34,6 @@ yarn-error.log*
 ats-backend/node_modules/
 ats-frontend/node_modules/
 python-backend/ats_env/
-ats-backend/build/asset-manifest.json
-ats-backend/build/index.html
-ats-backend/build/manifest.json
-ats-backend/build/static/css/main.db2edbd2.css
-ats-backend/build/static/css/main.db2edbd2.css.map
-ats-backend/build/static/js/main.a746fefb.js
-ats-backend/build/static/js/main.a746fefb.js.LICENSE.txt
-ats-backend/build/static/js/main.a746fefb.js.map
+ats-backend/build/
+ats-backend/dist/
+ats-backend/uploads/

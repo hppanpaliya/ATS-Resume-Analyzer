@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 // ========================================
@@ -67,9 +67,19 @@ model Resume {
   title                 String
   templateId            String?
 
-  // Content
-  content               String
-  extractedText         String?
+  // Content - Legacy field for backward compatibility
+  content               String?
+
+  // New structured content system
+  structuredData        String?   // JSON string for structured resume data
+  extractedText         String?   // Extracted text from file or structured data
+
+  // File Storage
+  originalFileId        String?   // Reference to stored file
+  originalFileName      String?   // Original filename
+  originalFileSize      Int?      // File size in bytes
+  originalFileType      String?   // MIME type
+  fileProcessedAt       DateTime? // When file was processed
 
   // Status
   status                String    @default("draft")
@@ -79,9 +89,9 @@ model Resume {
   aiOptimizedForJdId    String?
   optimizationScore     Int?
 
-  // Files
-  originalFileUrl       String?
+  // Export URLs (for generated files)
   exportedPdfUrl        String?
+  exportedDocxUrl       String?
 
   // Metadata
   createdAt             DateTime  @default(now())
@@ -111,12 +121,24 @@ model ResumeVersion {
 
   // Version Info
   versionNumber         Int
-  content               String
+
+  // Content - Legacy field for backward compatibility
+  content               String?
+
+  // New structured content system
+  structuredData        String?   // JSON string for structured resume data
+  extractedText         String?   // Extracted text from file or structured data
+
+  // File Storage
+  originalFileId        String?   // Reference to stored file
+  originalFileName      String?   // Original filename
+  originalFileSize      Int?      // File size in bytes
+  originalFileType      String?   // MIME type
 
   // Change Tracking
   changeSummary         String?
   changedByUserId       String?
-  changeType            String?
+  changeType            String?   // 'manual', 'ai_optimized', 'file_upload', 'template_applied'
 
   // Metadata
   createdAt             DateTime  @default(now())
@@ -136,8 +158,10 @@ model Template {
   description           String?
   category              String?
 
-  // Design
-  design                String
+  // Design & Structure
+  design                String    // CSS/design configuration
+  structure             String?   // JSON structure definition for resume builder
+  defaultData           String?   // JSON default data for the template
 
   // Preview
   previewImageUrl       String?

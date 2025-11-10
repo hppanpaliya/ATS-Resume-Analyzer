@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import resumeRoutes from './routes/resume.routes';
 import aiRoutes from './routes/ai.routes';
+import templateRoutes from './routes/template.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 import path from 'path';
 
@@ -15,9 +16,13 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
+app.use('/api/templates', templateRoutes);
 app.use('/api', aiRoutes);
 
 // Health check endpoint

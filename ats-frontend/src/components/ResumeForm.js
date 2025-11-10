@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createResume, updateResume } from '../services/api';
+import { createResume, updateResume, createResumeFromFile } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import useAuthStore from '../stores/authStore';
@@ -10,6 +10,7 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
     content: '',
     templateId: ''
   });
+  const [uploadedFile, setUploadedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -41,8 +42,9 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
       return;
     }
 
-    if (!formData.content.trim()) {
-      setError('Please enter resume content');
+    // Check if either content or file is provided
+    if (!formData.content.trim() && !uploadedFile) {
+      setError('Please enter resume content or upload a file');
       return;
     }
 
@@ -54,7 +56,11 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
       if (isEditing && resume) {
         result = await updateResume(resume.id, formData);
       } else {
-        result = await createResume(formData.title, formData.content, formData.templateId || undefined);
+        if (uploadedFile) {
+          result = await createResumeFromFile(formData.title, uploadedFile, formData.templateId || undefined);
+        } else {
+          result = await createResume(formData.title, formData.content, formData.templateId || undefined);
+        }
       }
 
       onSave(result);
@@ -239,6 +245,53 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
             </div>
           </div>
 
+          {/* File Upload */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              Or Upload Resume File (PDF or DOCX)
+            </label>
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+              <input
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setUploadedFile(file);
+                    setFormData(prev => ({ ...prev, content: '' })); // Clear content when file is uploaded
+                  }
+                }}
+                className="hidden"
+                id="resume-file"
+              />
+              <label htmlFor="resume-file" className="cursor-pointer">
+                <div className="flex flex-col items-center">
+                  <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-600 dark:text-gray-300 mb-2">
+                    {uploadedFile ? `Selected: ${uploadedFile.name}` : 'Click to upload PDF or DOCX file'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    The file will be processed and text extracted automatically
+                  </p>
+                </div>
+              </label>
+              {uploadedFile && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    document.getElementById('resume-file').value = '';
+                  }}
+                  className="mt-4 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  Remove file
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Content */}
           <div>
             <label htmlFor="content" className="block text-lg font-semibold text-gray-800 dark:text-white mb-3">
@@ -251,7 +304,7 @@ const ResumeForm = ({ resume, onSave, onCancel, isEditing = false }) => {
               onChange={handleChange}
               placeholder="Paste your resume content here, or write it directly..."
               className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white font-mono text-sm resize-vertical h-48 sm:h-80"
-              required
+              required={!uploadedFile}
             />
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Tip: You can paste content from your existing resume or write it directly here.

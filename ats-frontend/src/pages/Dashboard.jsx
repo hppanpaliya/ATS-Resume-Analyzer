@@ -177,23 +177,35 @@ const Dashboard = () => {
 
   // Persist model parameters to localStorage
   useEffect(() => {
-    localStorage.setItem('modelParameters', JSON.stringify(modelParameters));
+    try {
+      if (typeof Storage !== 'undefined') {
+        console.log('Saving model parameters:', modelParameters);
+        localStorage.setItem('modelParameters', JSON.stringify(modelParameters));
+      }
+    } catch (err) {
+      console.error('Failed to save model parameters:', err);
+    }
   }, [modelParameters]);
 
   // Load model parameters from localStorage on mount
   useEffect(() => {
-    const savedParameters = localStorage.getItem('modelParameters');
-    if (savedParameters) {
-      try {
-        const parsedParameters = JSON.parse(savedParameters);
-        setModelParameters({
-          temperature: parsedParameters.temperature ?? 0.15,
-          max_tokens: parsedParameters.max_tokens ?? 4000,
-          include_reasoning: parsedParameters.include_reasoning ?? false
-        });
-      } catch (err) {
-        console.error('Failed to load saved parameters:', err);
+    try {
+      if (typeof Storage !== 'undefined') {
+        const savedParameters = localStorage.getItem('modelParameters');
+        if (savedParameters) {
+          const parsedParameters = JSON.parse(savedParameters);
+          console.log('Loading saved model parameters:', parsedParameters);
+          setModelParameters({
+            temperature: parsedParameters.temperature ?? 0.15,
+            max_tokens: parsedParameters.max_tokens ?? 4000,
+            include_reasoning: parsedParameters.include_reasoning ?? false
+          });
+        } else {
+          console.log('No saved model parameters found');
+        }
       }
+    } catch (err) {
+      console.error('Failed to load saved parameters:', err);
     }
   }, []);
 
@@ -489,6 +501,10 @@ const Dashboard = () => {
                 value={jobDescription}
                 onChange={handleJobDescriptionChange}
               />
+
+              {/*  Error Message */}
+              {error && <ErrorMessage message={error} />}
+              
               {/* Analyze Button */}
               <button
                 onClick={handleAnalyze}
@@ -534,10 +550,6 @@ const Dashboard = () => {
                 selectedModel={selectedModel}
                 disabled={!showModelSelector || connectionStatus !== 'connected'}
               />
-
-              
-
-              {error && <ErrorMessage message={error} />}
             </div>
           </div>
         )}

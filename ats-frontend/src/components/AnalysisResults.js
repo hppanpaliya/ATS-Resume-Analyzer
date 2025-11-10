@@ -5,11 +5,23 @@ import ExperienceRelevance from './ExperienceRelevance';
 import FormattingScore from './FormattingScore';
 import ActionableAdvice from './ActionableAdvice';
 import EmptyState from './EmptyState';
+import { downloadResumeFile } from '../services/api';
 
 const AnalysisResults = ({ results }) => {
   if (!results) {
     return <EmptyState />;
   }
+
+  const handleDownloadResume = async () => {
+    try {
+      if (results.resume && results.resume.id) {
+        await downloadResumeFile(results.resume.id, results.resume.title || `resume-${results.resume.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to download resume:', error);
+      // You could add a toast notification here
+    }
+  };
 
   const getScoreText = (score) => {
     if (score >= 80) return { text: 'Excellent', color: 'from-green-400 to-emerald-500', emoji: '🎉' };
@@ -23,9 +35,22 @@ const AnalysisResults = ({ results }) => {
     <div className="space-y-8">
       {/* Overall Score */}
       <div className="glass-strong rounded-3xl p-8 hover-glass transition-all duration-300 slide-up">
-        <h3 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-          Overall Match Score
-        </h3>
+        <div className="flex justify-between items-start mb-6">
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Overall Match Score
+          </h3>
+          {results.resume && (
+            <button
+              onClick={handleDownloadResume}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Download Resume</span>
+            </button>
+          )}
+        </div>
         <div className="flex flex-col items-center justify-center space-y-6">
           <div className="relative">
             <ScoreRing score={results.overallScore} />
