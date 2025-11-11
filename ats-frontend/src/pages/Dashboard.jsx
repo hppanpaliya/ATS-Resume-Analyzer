@@ -454,9 +454,9 @@ const Dashboard = () => {
 
         {/* Main Content */}
         {currentView === 'analysis' && (
-          <div className="max-w-2xl mx-auto">
-            {/* Input Column */}
-            <div className="space-y-8 slide-up">
+          <div className="max-w-6xl mx-auto">
+            {/* Input Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 slide-up mb-8">
               <FileUpload
                 onFileSelect={handleFileSelect}
                 onFileError={handleFileError}
@@ -467,11 +467,13 @@ const Dashboard = () => {
                 value={jobDescription}
                 onChange={handleJobDescriptionChange}
               />
+            </div>
 
-              {/*  Error Message */}
-              {error && <ErrorMessage message={error} />}
-              
-              {/* Analyze Button */}
+            {/* Error Message */}
+            {error && <ErrorMessage message={error} />}
+
+            {/* Analyze Button - Full Width */}
+            <div className="mb-8">
               <button
                 onClick={handleAnalyze}
                 disabled={!resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'}
@@ -502,15 +504,16 @@ const Dashboard = () => {
                   </div>
                 )}
               </button>
+            </div>
 
-              {/* Model Parameters - ABOVE Model Selector */}
+            {/* Model Selector and Parameters Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <ModelParameters
                 parameters={modelParameters}
                 onParametersChange={handleModelParametersChange}
                 disabled={connectionStatus !== 'connected' || isLoading}
               />
-
-              {/* Model Selector */}
+              
               <ModelSelector
                 onModelSelect={handleModelSelect}
                 selectedModel={selectedModel}
