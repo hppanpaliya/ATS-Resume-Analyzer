@@ -375,6 +375,18 @@ const ModelSelector = ({ onModelSelect, selectedModel, disabled = false }) => {
       )}
 
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 bg-yellow-100/50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-2xl">
+          <div className="flex items-start space-x-2">
+            <svg className="w-4 h-4 text-yellow-600 dark:text-yellow-300 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">{error}</p>
+          </div>
+        </div>
+      )}
+
       {/* Current Selection Display */}
       {currentModel && (
         <div className="mb-4 p-4 glass rounded-2xl border border-blue-200/50 dark:border-blue-700/50">
