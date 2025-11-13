@@ -1,44 +1,38 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
 import { authService } from '../services/authService';
-import { analyzeResume, testConnection } from '../services/api';
-import FileUpload from '../components/FileUpload';
-import JobDescriptionInput from '../components/JobDescriptionInput';
-import ModelSelector from '../components/ModelSelector';
-import ModelParameters from '../components/ModelParameters';
-import ResumeList from '../components/ResumeList';
-import ResumeForm from '../components/ResumeForm';
-import ResumeDetail from '../components/ResumeDetail';
-import AnalysisHistory from '../components/AnalysisHistory';
-import JobDescriptionManager from '../components/JobDescriptionManager';
-import ErrorMessage from '../components/ErrorMessage';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { testConnection } from '../services/api';
+import AnalysisDashboard from './AnalysisDashboard';
+import ResumeManagementPage from './ResumeManagementPage';
+import HistoryPage from './HistoryPage';
 import SettingsPanel from '../components/SettingsPanel';
 import useTheme from '../hooks/useTheme';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { clearAuth } = useAuthStore();
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  // ATS Analysis state
-  const [resumeFile, setResumeFile] = useState(null);
-  const [jobDescription, setJobDescription] = useState('');
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Model Parameters state
+  const [modelParameters, setModelParameters] = useState({
+    temperature: 0.15,
+    max_tokens: 4000,
+    include_reasoning: false
+  });
+
+  // Connection status
   const [connectionStatus, setConnectionStatus] = useState('checking');
+
+  // Model selector state
   const [showModelSelector, setShowModelSelector] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
     }
     const saved = localStorage.getItem('showModelSelector');
-
     if (saved === null) {
       return false;
     }
-
     try {
       return JSON.parse(saved);
     } catch (err) {
@@ -53,18 +47,6 @@ const Dashboard = () => {
     const saved = localStorage.getItem('selectedModel');
     return saved || null;
   });
-
-  // Model Parameters state
-  const [modelParameters, setModelParameters] = useState({
-    temperature: 0.15,
-    max_tokens: 4000,
-    include_reasoning: false
-  });
-
-  // Resume Management state
-  const [currentView, setCurrentView] = useState('analysis'); // 'analysis', 'resumes', 'history', 'resume-detail', 'resume-form'
-  const [selectedResume, setSelectedResume] = useState(null);
-  const [editingResume, setEditingResume] = useState(null);
 
   const { theme, toggleTheme } = useTheme();
 
@@ -103,66 +85,20 @@ const Dashboard = () => {
     window.location.href = '/login';
   };
 
-  // ATS Analysis handlers
-  const handleFileSelect = useCallback((file) => {
-    setResumeFile(file);
-    setError('');
-    setAnalysisResult(null);
-  }, []);
-
-  const handleFileError = useCallback((errorMessage) => {
-    setError(errorMessage);
-    setAnalysisResult(null);
-  }, []);
-
-  const handleJobDescriptionChange = useCallback((value) => {
-    setJobDescription(value);
-    if (analysisResult) {
-      setAnalysisResult(null);
-    }
-  }, [analysisResult]);
-
-  const handleModelSelect = useCallback((modelId) => {
-    setSelectedModel(modelId);
-    if (analysisResult) {
-      setAnalysisResult(null);
-    }
-  }, [analysisResult]);
-
-  const handleToggleModelSelector = useCallback(() => {
+  const handleToggleModelSelector = () => {
     setShowModelSelector(prev => !prev);
-  }, []);
+  };
 
-  const handleResetSettings = useCallback(() => {
+  const handleResetSettings = () => {
     setShowModelSelector(false);
     setSelectedModel(null);
     localStorage.removeItem('showModelSelector');
     localStorage.removeItem('selectedModel');
-    setAnalysisResult(null);
-  }, []);
+  };
 
-  // Resume Management handlers
-  const handleCreateResume = useCallback(() => {
-    setEditingResume(null);
-    setCurrentView('resume-form');
-  }, []);
-
-  const handleEditResume = useCallback((resume) => {
-    setEditingResume(resume);
-    setCurrentView('resume-form');
-  }, []);
-
-  const handleViewResume = useCallback((resume) => {
-    setSelectedResume(resume);
-    setCurrentView('resume-detail');
-  }, []);
-
-  const handleSaveResume = useCallback((savedResume) => {
-    setCurrentView('resumes');
-    setEditingResume(null);
-    setSelectedResume(null);
-    // Could refresh resume list here if needed
-  }, []);
+  const handleModelParametersChange = (newParameters) => {
+    setModelParameters(newParameters);
+  };
 
   // Persist settings to localStorage
   useEffect(() => {
@@ -174,69 +110,6 @@ const Dashboard = () => {
       localStorage.setItem('selectedModel', selectedModel);
     }
   }, [selectedModel]);
-
-  const handleModelParametersChange = useCallback((newParameters) => {
-    setModelParameters(newParameters);
-    if (analysisResult) {
-      setAnalysisResult(null);
-    }
-  }, [analysisResult]);
-
-  const handleAnalyze = async () => {
-    if (!resumeFile || !jobDescription) {
-      setError('Please provide both a resume and job description');
-      return;
-    }
-
-    if (connectionStatus !== 'connected') {
-      setError('Backend server is not available. Please check your connection.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-    setAnalysisResult(null);
-
-    try {
-      // Extract job title from the job description - look for common patterns
-      const extractJobTitle = (jd) => {
-        const lines = jd.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        
-        // Look for lines that might be job titles (short, title case, etc.)
-        for (const line of lines.slice(0, 5)) {
-          if (line.length > 3 && line.length < 100 && 
-              (line.includes('Engineer') || line.includes('Developer') || line.includes('Manager') || 
-               line.includes('Analyst') || line.includes('Specialist') || line.includes('Director') ||
-               line.includes('Senior') || line.includes('Lead') || line.includes('Principal'))) {
-            return line;
-          }
-        }
-        
-        // Fallback to first non-empty line
-        return lines[0] || 'Untitled Position';
-      };
-      
-      const jobTitle = extractJobTitle(jobDescription);
-      const result = await analyzeResume(
-        resumeFile,
-        jobDescription,
-        showModelSelector ? selectedModel : null,
-        modelParameters,
-        jobTitle
-      );
-      setAnalysisResult(result);
-
-      // Redirect to analysis page with the result
-      navigate(`/analysis/${result.savedAnalysisId || 'new'}`, {
-        state: { analysis: result }
-      });
-    } catch (err) {
-      setError(err.message || 'Analysis failed. Please try again.');
-      console.error('Analysis error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getConnectionStatusDisplay = () => {
     switch (connectionStatus) {
@@ -279,6 +152,10 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  const isActive = (path) => {
+    return location.pathname === `/dashboard${path}`;
+  };
 
   return (
     <div className="min-h-screen animated-bg paper-texture relative overflow-hidden">
@@ -323,7 +200,7 @@ const Dashboard = () => {
             <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 font-light">
               Get AI-powered insights on how well your resume matches the job description
             </p>
-                        <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 flex-wrap">
+            <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 flex-wrap">
               {/* Connection Status */}
               <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
                 <div className={`w-2 h-2 ${connectionInfo.color} rounded-full ${connectionStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
@@ -360,60 +237,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2">
-            <div className="flex justify-around items-center max-w-md mx-auto">
-              <button
-                onClick={() => setCurrentView('analysis')}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                  currentView === 'analysis'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-xs font-medium">Analyze</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('resumes')}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                  currentView === 'resumes'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="text-xs font-medium">Resumes</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('history')}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                  currentView === 'history'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs font-medium">History</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Desktop Navigation Tabs */}
         <div className="hidden sm:flex justify-center mb-8">
           <div className="glass-strong rounded-2xl p-2 flex space-x-2">
-            <button
-              onClick={() => setCurrentView('analysis')}
+            <Link
+              to="/dashboard/analysis"
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                currentView === 'analysis'
+                isActive('/analysis')
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
@@ -422,11 +252,11 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               ATS Analysis
-            </button>
-            <button
-              onClick={() => setCurrentView('resumes')}
+            </Link>
+            <Link
+              to="/dashboard/resumes"
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                currentView === 'resumes'
+                isActive('/resumes')
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
@@ -435,11 +265,11 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Resume Management
-            </button>
-            <button
-              onClick={() => setCurrentView('history')}
+            </Link>
+            <Link
+              to="/dashboard/history"
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                currentView === 'history'
+                isActive('/history')
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white/10'
               }`}
@@ -448,113 +278,77 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               History & Management
-            </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2">
+            <div className="flex justify-around items-center max-w-md mx-auto">
+              <Link
+                to="/dashboard/analysis"
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  isActive('/analysis')
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-xs font-medium">Analyze</span>
+              </Link>
+              <Link
+                to="/dashboard/resumes"
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  isActive('/resumes')
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="text-xs font-medium">Resumes</span>
+              </Link>
+              <Link
+                to="/dashboard/history"
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
+                  isActive('/history')
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-medium">History</span>
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        {currentView === 'analysis' && (
-          <div className="max-w-6xl mx-auto">
-            {/* Input Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 slide-up mb-8">
-              <FileUpload
-                onFileSelect={handleFileSelect}
-                onFileError={handleFileError}
-                selectedFile={resumeFile}
-              />
-
-              <JobDescriptionInput
-                value={jobDescription}
-                onChange={handleJobDescriptionChange}
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && <ErrorMessage message={error} />}
-
-            {/* Analyze Button - Full Width */}
-            <div className="mb-8">
-              <button
-                onClick={handleAnalyze}
-                disabled={!resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'}
-                className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
-                  !resumeFile || !jobDescription || isLoading || connectionStatus !== 'connected'
-                    ? 'bg-gray-300/50 text-gray-500 cursor-not-allowed'
-                    : 'btn-glass text-white shadow-lg hover:shadow-2xl'
-                }`}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <LoadingSpinner />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-3">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span>
-                      {connectionStatus !== 'connected' ? 'Connecting...' : 'Analyze Resume'}
-                    </span>
-                    {showModelSelector && selectedModel && connectionStatus === 'connected' && (
-                      <span className="text-sm opacity-80">
-                        with AI
-                      </span>
-                    )}
-                  </div>
-                )}
-              </button>
-            </div>
-
-            {/* Model Selector and Parameters Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <ModelParameters
-                parameters={modelParameters}
-                onParametersChange={handleModelParametersChange}
-                disabled={connectionStatus !== 'connected' || isLoading}
-              />
-              
-              <ModelSelector
-                onModelSelect={handleModelSelect}
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard/analysis" replace />} />
+          <Route
+            path="analysis"
+            element={
+              <AnalysisDashboard
+                showModelSelector={showModelSelector}
                 selectedModel={selectedModel}
-                disabled={!showModelSelector || connectionStatus !== 'connected'}
+                modelParameters={modelParameters}
+                connectionStatus={connectionStatus}
+                setConnectionStatus={setConnectionStatus}
+                onModelSelect={setSelectedModel}
+                onModelParametersChange={handleModelParametersChange}
               />
-            </div>
-          </div>
-        )}
-
-        {currentView === 'resumes' && (
-          <ResumeList
-            onViewResume={handleViewResume}
-            onEditResume={handleEditResume}
-            onCreateResume={handleCreateResume}
+            }
           />
-        )}
-
-        {currentView === 'resume-detail' && selectedResume && (
-          <ResumeDetail
-            resume={selectedResume}
-            onBack={() => setCurrentView('resumes')}
-            onEdit={() => handleEditResume(selectedResume)}
-          />
-        )}
-
-        {currentView === 'resume-form' && (
-          <ResumeForm
-            resume={editingResume}
-            onSave={handleSaveResume}
-            onCancel={() => setCurrentView('resumes')}
-          />
-        )}
-
-        {currentView === 'history' && (
-          <div className="space-y-8">
-            <AnalysisHistory />
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-              <JobDescriptionManager />
-            </div>
-          </div>
-        )}
+          <Route path="resumes" element={<ResumeManagementPage />} />
+          <Route path="history" element={<HistoryPage />} />
+        </Routes>
 
         {/* Footer */}
         <div className="mt-16 text-center">
