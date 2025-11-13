@@ -23,8 +23,8 @@ const ResumeDetail = ({ resume: initialResume, onBack, onEdit }) => {
       setError('');
 
       // Create a File object from the resume content for analysis
-      const resumeBlob = new Blob([initialResume.content], { type: 'text/plain' });
-      const resumeFile = new File([resumeBlob], `${initialResume.title}.txt`, { type: 'text/plain' });
+      const resumeFile = new File([initialResume.content], initialResume.originalFileName || `${initialResume.title}.txt`, { type: 'application/octet-stream' }); 
+
 
       const result = await analyzeResume(resumeFile, jobDescription);
       setAnalysisResult(result);
