@@ -140,25 +140,10 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
         />
       </div>
 
-      {/* Model Selector and Parameters */}
-      {showModelSelector && (
-        <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelSelect={handleModelSelect}
-            />
-            <ModelParameters
-              parameters={modelParameters}
-              onChange={handleModelParametersChange}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Error Message */}
       {error && <ErrorMessage message={error} />}
 
+      
       {/* Analyze Button - Full Width */}
       <div className="mb-8">
         <button
@@ -202,6 +187,23 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
           </p>
         )}
       </div>
+
+      {/* Model Selector and Parameters */}
+      {showModelSelector && (
+        <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <ModelSelector
+              selectedModel={selectedModel}
+              onModelSelect={handleModelSelect}
+            />
+            <ModelParameters
+              parameters={modelParameters}
+              onParametersChange={handleModelParametersChange}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
