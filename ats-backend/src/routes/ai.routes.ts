@@ -1,6 +1,6 @@
 import { Router, Request } from 'express';
 import multer from 'multer';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { AIService } from '../services/ai.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
@@ -112,7 +112,8 @@ router.post('/analyze', authMiddleware, upload.single('resume'), async (req: Aut
         let text = '';
         try {
             if (req.file.mimetype === 'application/pdf') {
-                const data = await pdfParse(req.file.buffer);
+                const parser = new PDFParse({ data: req.file.buffer });
+                const data = await parser.getText();
                 text = data.text;
             } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
                 const result = await mammoth.extractRawText({ buffer: req.file.buffer });
