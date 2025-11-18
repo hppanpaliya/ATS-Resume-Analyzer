@@ -43,6 +43,11 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // Don't try to refresh token for login requests
+      if (originalRequest.url?.includes('/api/auth/login')) {
+        return Promise.reject(error);
+      }
+
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
         const response = await apiClient.post('/api/auth/refresh', {
@@ -60,7 +65,10 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         useAuthStore.getState().clearAuth();
-        window.location.href = '/login';
+        // Only redirect to login if we're not already on the login page
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }
@@ -74,8 +82,30 @@ apiClient.interceptors.response.use(
 
     if (error.response) {
       // Server responded with error status
-      const message = error.response.data?.error || error.response.data?.message || 'Server error occurred';
-      throw new Error(message);
+      const status = error.response.status;
+      const data = error.response.data;
+
+      // Handle specific error codes with user-friendly messages
+      switch (status) {
+        case 400:
+          throw new Error(data?.error || 'Invalid request. Please check your input.');
+        case 401:
+          throw new Error('Invalid email or password. Please try again.');
+        case 403:
+          throw new Error('You don\'t have permission to access this resource.');
+        case 404:
+          throw new Error('The requested resource was not found.');
+        case 409:
+          throw new Error('This item already exists.');
+        case 422:
+          throw new Error('Please check your input and try again.');
+        case 429:
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        case 500:
+          throw new Error('Server error. Please try again later.');
+        default:
+          throw new Error(data?.error || `Something went wrong (${status}). Please try again.`);
+      }
     } else if (error.request) {
       // Request was made but no response received
       throw new Error('No response from server. Please check if the backend is running.');
