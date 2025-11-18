@@ -1,7 +1,7 @@
 import axios from 'axios';
 import useAuthStore from '../stores/authStore';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
