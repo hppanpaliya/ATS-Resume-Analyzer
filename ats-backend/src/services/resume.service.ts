@@ -351,8 +351,16 @@ export class ResumeService {
           skills: [],
         };
       }
-    } else {
+    } else if (resume.content && typeof resume.content === 'object') {
       structuredContent = resume.content;
+    } else {
+      structuredContent = {
+        personalInfo: {},
+        summary: '',
+        experience: [],
+        education: [],
+        skills: [],
+      };
     }
 
     console.log('Structured content keys:', Object.keys(structuredContent));

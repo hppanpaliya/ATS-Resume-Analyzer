@@ -1,4 +1,4 @@
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { FileStorageService, FileMetadata } from './file-storage.service';
 
@@ -50,9 +50,10 @@ export class ResumeFileService {
     try {
       switch (metadata.mimeType) {
         case 'application/pdf':
-          const pdfData = await pdfParse(buffer);
+          const parser = new PDFParse({ data: buffer });
+          const pdfData = await parser.getText();
           text = pdfData.text;
-          pageCount = pdfData.numpages;
+          pageCount = pdfData.pages?.length || undefined;
           break;
 
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
