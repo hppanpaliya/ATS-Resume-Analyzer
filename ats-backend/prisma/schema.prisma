@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = env("DATABASE_PROVIDER") != "" ? env("DATABASE_PROVIDER") : "sqlite"
+  url      = env("DATABASE_URL") != "" ? env("DATABASE_URL") : "file:./dev.db"
 }
 
 // ========================================
@@ -14,7 +14,7 @@ datasource db {
 // ========================================
 
 model User {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
 
   // Authentication
   email                 String    @unique
@@ -60,7 +60,7 @@ model User {
 }
 
 model Resume {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String
 
   // Resume Info
@@ -107,7 +107,7 @@ model Resume {
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   template              Template? @relation(fields: [templateId], references: [id])
   optimizedFor          JobDescription? @relation("optimizedFor", fields: [aiOptimizedForJdId], references: [id])
-  parentResume          Resume?   @relation("ResumeVariants", fields: [parentResumeId], references: [id])
+  parentResume          Resume?   @relation("ResumeVariants", fields: [parentResumeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   childResumes          Resume[]  @relation("ResumeVariants")
   versions              ResumeVersion[]
   analyses              Analysis[]
@@ -116,7 +116,7 @@ model Resume {
 }
 
 model ResumeVersion {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   resumeId              String
 
   // Version Info
@@ -144,14 +144,14 @@ model ResumeVersion {
   createdAt             DateTime  @default(now())
 
   // Relations
-  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([resumeId, versionNumber])
   @@map("resume_versions")
 }
 
 model Template {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
 
   // Template Info
   name                  String    @unique
@@ -186,7 +186,7 @@ model Template {
 }
 
 model JobDescription {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String
 
   // Job Info
@@ -215,7 +215,7 @@ model JobDescription {
 }
 
 model Analysis {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String
   resumeId              String
   jobDescriptionId      String?
@@ -244,15 +244,15 @@ model Analysis {
   completedAt           DateTime?
 
   // Relations
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  jobDescription        JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  jobDescription        JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@map("analyses")
 }
 
 model AiUsage {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String
 
   // Request Info
@@ -283,7 +283,7 @@ model AiUsage {
 }
 
 model Subscription {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String    @unique
 
   // Subscription Info
@@ -314,7 +314,7 @@ model Subscription {
 }
 
 model AuditLog {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid()) @map("_id")
   userId                String?
 
   // Action Info
