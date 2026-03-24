@@ -11,7 +11,8 @@ import useTheme from '../hooks/useTheme';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-  const { clearAuth } = useAuthStore();
+  const [sessionWarning, setSessionWarning] = useState('');
+  const { clearAuth, updateUser, refreshToken, hasHydrated, user } = useAuthStore();
   const location = useLocation();
 
   // Model Parameters state
@@ -51,26 +52,49 @@ const Dashboard = () => {
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+
     const loadUser = async () => {
       try {
-        await authService.getCurrentUser();
+        const userResponse = await authService.getCurrentUser();
+        if (userResponse?.user) {
+          updateUser(userResponse.user);
+        }
+        setSessionWarning('');
         // User is authenticated, continue to dashboard
       } catch (error) {
-        console.error('Failed to load user:', error);
+        const message = String(error?.message || '');
+        const isAuthError =
+          message.includes('Authentication required') ||
+          message.includes('Invalid refresh token') ||
+          message.includes('Missing refresh token') ||
+          message.includes('Invalid token') ||
+          message.includes('No token provided') ||
+          message.includes('User not found');
+
+        if (isAuthError) {
+          clearAuth();
+          window.location.href = '/login';
+          return;
+        }
+
+        setSessionWarning('Session validation is temporarily unavailable. Your session is preserved; try again shortly.');
       } finally {
         setLoading(false);
       }
     };
 
     loadUser();
-  }, []);
+  }, [clearAuth, hasHydrated, updateUser]);
 
   // Check backend connection
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await testConnection();
-        setConnectionStatus('connected');
+        const result = await testConnection();
+        setConnectionStatus(result.success ? 'connected' : 'error');
       } catch (error) {
         console.error('Connection check failed:', error);
         setConnectionStatus('error');
@@ -81,6 +105,7 @@ const Dashboard = () => {
   }, []);
 
   const handleLogout = () => {
+    authService.logout(refreshToken).catch(() => {});
     clearAuth();
     window.location.href = '/login';
   };
@@ -197,9 +222,24 @@ const Dashboard = () => {
                 Logout
               </button>
             </div>
+            {user?.subscriptionTier === 'admin' && (
+              <div className="mt-4 flex justify-center">
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Open Admin Console
+                </Link>
+              </div>
+            )}
             <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 font-light">
               Get AI-powered insights on how well your resume matches the job description
             </p>
+            {sessionWarning && (
+              <div className="mt-4 px-4 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 text-sm" role="status" aria-live="polite">
+                {sessionWarning}
+              </div>
+            )}
             <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 flex-wrap">
               {/* Connection Status */}
               <div className="flex items-center space-x-2 glass px-3 sm:px-4 py-2 rounded-full">
@@ -348,6 +388,7 @@ const Dashboard = () => {
           />
           <Route path="resumes" element={<ResumeManagementPage />} />
           <Route path="history" element={<HistoryPage />} />
+          <Route path="*" element={<Navigate to="/dashboard/analysis" replace />} />
         </Routes>
 
         {/* Footer */}

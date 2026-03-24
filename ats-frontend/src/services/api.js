@@ -1,7 +1,11 @@
 import axios from 'axios';
 import useAuthStore from '../stores/authStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV ? 'http://localhost:3001' : (
+    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'
+  )
+);
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
@@ -12,18 +16,53 @@ const apiClient = axios.create({
   }
 });
 
+const isAuthRequest = (url = '') => (
+  url.includes('/api/auth/login') ||
+  url.includes('/api/auth/register') ||
+  url.includes('/api/auth/refresh') ||
+  url.includes('/api/auth/logout')
+);
+
+let refreshPromise = null;
+
+const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const isTransientRefreshError = (error) => {
+  const status = error?.response?.status;
+  return !status || status >= 500;
+};
+
+const requestTokenRefresh = async (refreshToken) => {
+  const maxAttempts = 2;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await axios.post(
+        `${API_BASE_URL}/api/auth/refresh`,
+        { refreshToken },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      if (attempt >= maxAttempts || !isTransientRefreshError(error)) {
+        throw error;
+      }
+
+      await sleep(250 * attempt);
+    }
+  }
+
+  throw new Error('Failed to refresh session');
+};
+
 // Request interceptor - add token
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
-    // console.log('Access token from store:', token ? 'present' : 'null/undefined');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      // console.log('Authorization header set');
-    } else {
-      // console.log('No token available, request will be unauthenticated');
     }
-    // console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    
     return config;
   },
   (error) => {
@@ -38,38 +77,65 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config || {};
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Don't try to refresh token for login requests
-      if (originalRequest.url?.includes('/api/auth/login')) {
+      if (isAuthRequest(originalRequest.url)) {
         return Promise.reject(error);
       }
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        const response = await apiClient.post('/api/auth/refresh', {
-          refreshToken,
-        });
 
-        const { tokens } = response.data.data;
+        if (!refreshToken) {
+          throw new Error('Missing refresh token');
+        }
+
+        if (!refreshPromise) {
+          refreshPromise = requestTokenRefresh(refreshToken);
+        }
+
+        const response = await refreshPromise;
+
+        const tokens = response?.data?.data?.tokens;
+        if (!tokens?.accessToken || !tokens?.refreshToken) {
+          throw new Error('Invalid refresh response');
+        }
+
         useAuthStore.getState().setAuth(
           useAuthStore.getState().user,
           tokens.accessToken,
           tokens.refreshToken
         );
 
-        originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${tokens.accessToken}`,
+        };
+
         return apiClient(originalRequest);
       } catch (refreshError) {
-        useAuthStore.getState().clearAuth();
-        // Only redirect to login if we're not already on the login page
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        const refreshStatus = refreshError?.response?.status;
+        const shouldClearAuth =
+          refreshError?.message === 'Missing refresh token' ||
+          refreshError?.message === 'Invalid refresh response' ||
+          refreshStatus === 400 ||
+          refreshStatus === 401 ||
+          refreshStatus === 403;
+
+        if (shouldClearAuth) {
+          useAuthStore.getState().clearAuth();
+          // Only redirect to login if we're not already on the login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
+
         return Promise.reject(refreshError);
+      } finally {
+        refreshPromise = null;
       }
     }
 
@@ -84,25 +150,34 @@ apiClient.interceptors.response.use(
       // Server responded with error status
       const status = error.response.status;
       const data = error.response.data;
+      const requestUrl = error.config?.url || '';
 
       // Handle specific error codes with user-friendly messages
       switch (status) {
         case 400:
           throw new Error(data?.error || 'Invalid request. Please check your input.');
         case 401:
-          throw new Error('Invalid email or password. Please try again.');
+          if (requestUrl.includes('/api/auth/login')) {
+            throw new Error('Invalid email or password. Please try again.');
+          }
+          throw new Error(data?.error || 'Authentication required. Please sign in again.');
         case 403:
           throw new Error('You don\'t have permission to access this resource.');
         case 404:
           throw new Error('The requested resource was not found.');
         case 409:
+          if (requestUrl.includes('/api/auth/register')) {
+            throw new Error(data?.error || 'An account with this email already exists.');
+          }
           throw new Error('This item already exists.');
         case 422:
           throw new Error('Please check your input and try again.');
         case 429:
           throw new Error('Too many requests. Please wait a moment and try again.');
         case 500:
-          throw new Error('Server error. Please try again later.');
+          throw new Error(data?.error || 'Server error. Please try again later.');
+        case 503:
+          throw new Error(data?.error || 'Service temporarily unavailable. Please try again shortly.');
         default:
           throw new Error(data?.error || `Something went wrong (${status}). Please try again.`);
       }
@@ -155,6 +230,46 @@ export const analyzeResume = async (resumeFile, jobDescription, selectedModel = 
   }
 };
 
+export const getAnalysisJobStatus = async (jobId) => {
+  try {
+    const response = await apiClient.get(`/api/analysis/${jobId}/status`);
+    return response.data.data;
+  } catch (error) {
+    throw new Error(`Failed to fetch analysis status: ${error.message}`);
+  }
+};
+
+export const waitForAnalysisCompletion = async (
+  jobId,
+  { intervalMs = 1500, timeoutMs = 120000 } = {}
+) => {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const status = await getAnalysisJobStatus(jobId);
+
+    if (status.state === 'completed') {
+      return {
+        ...status,
+        result: status.result
+          ? {
+              ...status.result,
+              savedAnalysisId: status.result.savedAnalysisId || status.result.analysisId || null,
+            }
+          : null,
+      };
+    }
+
+    if (status.state === 'failed') {
+      throw new Error(status.error || 'Analysis failed during processing.');
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+  }
+
+  throw new Error('Analysis is taking longer than expected. Please check your history shortly.');
+};
+
 // Get available AI models from backend
 export const getAvailableModels = async () => {
   try {
@@ -200,11 +315,96 @@ export const getAnalysisById = async (analysisId) => {
   }
 };
 
+export const parseResumeText = async (text) => {
+  try {
+    const response = await apiClient.post('/api/resumes/parse', { text });
+    return response.data.data;
+  } catch (error) {
+    throw new Error(`Failed to parse resume text: ${error.message}`);
+  }
+};
+
+export const generateResumePreview = async (content, templateId = null) => {
+  try {
+    const response = await apiClient.post('/api/resumes/preview', {
+      content,
+      templateId,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to generate resume preview: ${error.message}`);
+  }
+};
+
+export const exportResume = async (resumeId, format = 'pdf') => {
+  const normalizedFormat = ['pdf', 'word'].includes(format) ? format : 'pdf';
+
+  try {
+    const response = await apiClient.get(`/api/resumes/${resumeId}/export/${normalizedFormat}`, {
+      responseType: 'blob',
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to export resume: ${error.message}`);
+  }
+};
+
+export const analyzeStoredResume = async (
+  resumeId,
+  jobDescription,
+  selectedModel = null,
+  modelParameters = {},
+  jobTitle = null
+) => {
+  try {
+    const payload = {
+      jobDescription,
+      selectedModel,
+      jobTitle,
+      ...modelParameters,
+    };
+
+    const response = await apiClient.post(`/api/resumes/${resumeId}/analyze`, payload);
+    return response.data.data;
+  } catch (error) {
+    throw new Error(`Failed to analyze resume: ${error.message}`);
+  }
+};
+
+const normalizeJobDescriptionPayload = (jobData = {}) => {
+  const normalizeNullableString = (value) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null) {
+      return null;
+    }
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  };
+
+  return {
+    title: typeof jobData.title === 'string' ? jobData.title.trim() : jobData.title,
+    description: typeof jobData.description === 'string' ? jobData.description.trim() : jobData.description,
+    company: normalizeNullableString(jobData.company),
+    location: normalizeNullableString(jobData.location),
+    sourceUrl: normalizeNullableString(jobData.sourceUrl),
+  };
+};
+
 // Job description operations
 export const getJobDescriptions = async () => {
   try {
-    const response = await apiClient.get('/api/job-descriptions');
-    return response.data.data;
+    const response = await apiClient.get('/api/job-descriptions', {
+      params: { page: 1, limit: 100 },
+    });
+    return response.data.data?.jobDescriptions || [];
   } catch (error) {
     console.error('Failed to fetch job descriptions:', error);
     throw new Error(`Failed to load job descriptions: ${error.message}`);
@@ -213,7 +413,8 @@ export const getJobDescriptions = async () => {
 
 export const createJobDescription = async (jobData) => {
   try {
-    const response = await apiClient.post('/api/job-descriptions', jobData);
+    const payload = normalizeJobDescriptionPayload(jobData);
+    const response = await apiClient.post('/api/job-descriptions', payload);
     return response.data.data;
   } catch (error) {
     console.error('Failed to create job description:', error);
@@ -223,7 +424,8 @@ export const createJobDescription = async (jobData) => {
 
 export const updateJobDescription = async (jobId, updates) => {
   try {
-    const response = await apiClient.put(`/api/job-descriptions/${jobId}`, updates);
+    const payload = normalizeJobDescriptionPayload(updates);
+    const response = await apiClient.put(`/api/job-descriptions/${jobId}`, payload);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update job description:', error);
@@ -305,11 +507,25 @@ export const createResumeFromStructuredData = async (title, structuredData, temp
 
 export const updateResume = async (resumeId, updates) => {
   try {
-    const response = await apiClient.put(`/api/resumes/${resumeId}`, updates);
-    return response.data.data;
+    const payload = {
+      ...updates,
+      templateId: updates?.templateId === '' ? null : updates?.templateId,
+    };
+    const response = await apiClient.put(`/api/resumes/${resumeId}`, payload);
+    return response.data.data.resume;
   } catch (error) {
     console.error('Failed to update resume:', error);
     throw new Error(`Failed to update resume: ${error.message}`);
+  }
+};
+
+export const getResumeById = async (resumeId) => {
+  try {
+    const response = await apiClient.get(`/api/resumes/${resumeId}`);
+    return response.data.data.resume;
+  } catch (error) {
+    console.error('Failed to fetch resume:', error);
+    throw new Error(`Failed to fetch resume: ${error.message}`);
   }
 };
 
@@ -326,7 +542,7 @@ export const deleteResume = async (resumeId) => {
 // Health check endpoint
 export const checkHealth = async () => {
   try {
-    const response = await apiClient.get('/health');
+    const response = await apiClient.get('/api/health');
     return response.data;
   } catch (error) {
     throw new Error('Backend service unavailable');
@@ -389,23 +605,16 @@ export const getTemplateById = async (templateId) => {
 
 // Test API connection
 export const testConnection = async () => {
-  try {
-    const startTime = Date.now();
-    const health = await checkHealth();
-    const responseTime = Date.now() - startTime;
-    
-    return {
-      success: true,
-      responseTime,
-      serverTime: health.timestamp,
-      modelCache: health.modelCache
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
+  const startTime = Date.now();
+  const health = await checkHealth();
+  const responseTime = Date.now() - startTime;
+
+  return {
+    success: true,
+    responseTime,
+    serverTime: health.timestamp,
+    modelCache: health.modelCache,
+  };
 };
 
 // Utility function to validate file before upload
@@ -448,4 +657,3 @@ export const formatModelName = (modelId) => {
 
 // Export the axios instance as default for auth service
 export default apiClient;
-

@@ -21,7 +21,7 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
       } else {
         setResumes(prev => [...prev, ...result.resumes]);
       }
-      setHasMore(page < result.pagination.pages);
+      setHasMore(Boolean(result.pagination?.hasNextPage || page < (result.pagination?.totalPages || 0)));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,7 +70,7 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
   if (loading && resumes.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
-        <LoadingSpinner />
+        <LoadingSpinner label="Loading resumes..." />
       </div>
     );
   }
@@ -116,7 +116,15 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
             <div
               key={resume.id}
               onClick={() => onViewResume(resume)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onViewResume(resume);
+                }
+              }}
               className="glass-strong rounded-2xl p-6 hover-glass transition-all duration-300 cursor-pointer group"
+              role="button"
+              tabIndex={0}
             >
               {/* Resume Header */}
               <div className="flex items-start justify-between mb-4">
@@ -134,7 +142,9 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
                       e.stopPropagation();
                       onEditResume(resume);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                    className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                    type="button"
+                    aria-label="Edit resume"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -145,6 +155,7 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
                       onClick={(e) => handleDownloadOriginal(resume, e)}
                       className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200"
                       title="Download original file"
+                      type="button"
                     >
                       <Download className="w-4 h-4" />
                     </button>
@@ -152,10 +163,12 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
                   <button
                     onClick={(e) => handleDelete(resume.id, e)}
                     disabled={deletingId === resume.id}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    type="button"
+                    aria-label="Delete resume"
                   >
                     {deletingId === resume.id ? (
-                      <LoadingSpinner size="sm" />
+                      <LoadingSpinner size="sm" label="Deleting..." />
                     ) : (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -168,7 +181,8 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
               {/* Resume Preview */}
               <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-4">
                 <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-                  {resume.content?.substring(0, 150)}...
+                  {(resume.previewText || resume.content || resume.extractedText || 'No preview available').substring(0, 150)}
+                  ...
                 </div>
               </div>
 
@@ -186,7 +200,7 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                       </svg>
-                      Template
+                      {resume.templateName || 'Template'}
                     </span>
                   )}
                 </div>
@@ -207,7 +221,7 @@ const ResumeList = ({ onViewResume, onEditResume, onCreateResume }) => {
             disabled={loading}
             className="btn-glass text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
           >
-            {loading ? <LoadingSpinner size="sm" /> : 'Load More Resumes'}
+            {loading ? <LoadingSpinner size="sm" label="" /> : 'Load More Resumes'}
           </button>
         </div>
       )}

@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3001;
 
 // Initialize OpenAI with OpenRouter
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
     baseURL: process.env.BASE_URL || 'https://openrouter.ai/api/v1',
 });
 
@@ -26,7 +26,7 @@ let modelCache = {
 };
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
+const DEFAULT_MODEL = 'openrouter/free';
 
 // Middleware
 app.use(cors());
@@ -56,7 +56,7 @@ async function fetchModelsFromOpenRouter() {
         
         const response = await axios.get('https://openrouter.ai/api/v1/models', {
             headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json'
             },
             timeout: 10000 // 10 second timeout
@@ -118,10 +118,10 @@ async function fetchModelsFromOpenRouter() {
         console.log('Using fallback default model');
         const fallbackModels = [{
             id: DEFAULT_MODEL,
-            name: 'Gemini 2.0 Flash',
+            name: 'OpenRouter Free',
             created: Date.now(),
-            description: 'Google\'s latest Gemini model with excellent reasoning capabilities',
-            context_length: 32768,
+            description: 'OpenRouter route that selects an available free model.',
+            context_length: 128000,
             architecture: { modality: 'text->text' },
             per_request_limits: null,
             supported_parameters: [
@@ -134,7 +134,7 @@ async function fetchModelsFromOpenRouter() {
             "tools",
             "top_p"
             ],
-            provider: 'Google',
+            provider: 'OpenRouter',
             recommended: true
         }];
         

@@ -1,6 +1,7 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.docker
 
 /generated/prisma
 
@@ -83,3 +84,9 @@ python-backend/ats_env/
 ats-backend/build/
 ats-backend/dist/
 ats-backend/uploads/
+
+# Playwright artifacts
+ats-frontend/test-results/
+ats-frontend/playwright-report/
+ats-frontend/blob-report/
+

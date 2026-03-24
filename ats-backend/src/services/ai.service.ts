@@ -1,25 +1,63 @@
 import OpenAI from 'openai';
 import axios from 'axios';
+import type {
+  AIModel,
+  ModelCache,
+  FormattingAnalysis,
+  ModelParameters,
+  AnalysisResult,
+  CompletionParameters,
+  OpenAICompletion,
+  HealthCheckResponse,
+} from '../types/index';
 
-// Initialize OpenAI with OpenRouter
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.BASE_URL || 'https://openrouter.ai/api/v1',
-});
-
-// Model cache with 24-hour expiration
-let modelCache = {
-    data: [],
-    lastFetched: null as number | null,
-    isLoading: false
+// Lazy initialization of OpenAI client
+let _openai: OpenAI | null = null;
+const AI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
+const getOpenAIClient = (): OpenAI => {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: AI_API_KEY,
+      baseURL: process.env.BASE_URL || 'https://openrouter.ai/api/v1',
+    });
+  }
+  return _openai;
 };
 
+// Model cache with 24-hour expiration
+let modelCache: ModelCache = {
+    data: [],
+    lastFetched: null,
+    isLoading: false
+};
+let modelFetchPromise: Promise<AIModel[]> | null = null;
+
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-const DEFAULT_MODEL = process.env.ANALYSIS_MODEL || 'google/gemini-2.0-flash-exp:free';
+const DEFAULT_MODEL = process.env.ANALYSIS_MODEL || 'openrouter/free';
+const AI_REQUEST_TIMEOUT_MS = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || '60000', 10);
+const AI_MAX_RETRIES = Number.parseInt(process.env.AI_MAX_RETRIES || '2', 10);
+
+const REQUEST_TIMEOUT_MS = Number.isFinite(AI_REQUEST_TIMEOUT_MS) && AI_REQUEST_TIMEOUT_MS > 0
+    ? AI_REQUEST_TIMEOUT_MS
+    : 60000;
+const MAX_RETRIES = Number.isFinite(AI_MAX_RETRIES) && AI_MAX_RETRIES >= 0
+    ? AI_MAX_RETRIES
+    : 2;
+
+const createDefaultModel = (): AIModel => ({
+    id: DEFAULT_MODEL,
+    name: 'OpenRouter Free',
+    provider: 'OpenRouter',
+    context_length: 128000,
+    supported_parameters: ['temperature', 'max_tokens'],
+    created: Math.floor(Date.now() / 1000),
+    description: 'OpenRouter route that selects an available free model for the request.',
+    recommended: true,
+});
 
 export class AIService {
     // Basic formatting analysis based on text patterns
-    private analyzeFormattingIssues(text: string): { detectedIssues: string[], formattingHints: string[] } {
+    private analyzeFormattingIssues(text: string): FormattingAnalysis {
         const detectedIssues: string[] = [];
         const formattingHints: string[] = [];
 
@@ -88,7 +126,7 @@ export class AIService {
 
         return { detectedIssues, formattingHints };
     }
-    async getAvailableModels() {
+    async getAvailableModels(): Promise<AIModel[]> {
         const now = Date.now();
 
         // Return cached data if still valid
@@ -99,67 +137,76 @@ export class AIService {
         }
 
         // Prevent multiple simultaneous requests
-        if (modelCache.isLoading) {
-            // Wait for existing request to complete
-            while (modelCache.isLoading) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            return modelCache.data;
+        if (modelFetchPromise) {
+            return modelFetchPromise;
         }
 
         modelCache.isLoading = true;
 
-        try {
-            const response = await axios.get('https://openrouter.ai/api/v1/models');
+        modelFetchPromise = (async () => {
+            try {
+                const response = await axios.get('https://openrouter.ai/api/v1/models');
 
-            // Filter and format models
-            const models = response.data.data
-                .filter((model: any) => model.id.includes('free') || model.pricing?.prompt === '0')
-                .map((model: any) => ({
-                    id: model.id,
-                    name: model.name || model.id,
-                    provider: model.id.split('/')[0],
-                    context_length: model.context_length || 4096,
-                    supported_parameters: model.supported_parameters || [],
-                    per_request_limits: model.per_request_limits,
-                    pricing: model.pricing,
-                    created: model.created,
-                    description: model.description || '',
-                    architecture: model.architecture,
-                }));
+                // Filter and format models
+                const fetchedModels: AIModel[] = response.data.data
+                    .filter((model: AIModel) => model.id.includes('free') || model.pricing?.prompt === '0')
+                    .map((model: AIModel) => ({
+                        id: model.id,
+                        name: model.name || model.id,
+                        provider: model.id.split('/')[0],
+                        context_length: model.context_length || 4096,
+                        supported_parameters: model.supported_parameters || [],
+                        per_request_limits: model.per_request_limits,
+                        pricing: model.pricing,
+                        created: model.created,
+                        description: model.description || '',
+                        architecture: model.architecture,
+                        recommended: model.id === DEFAULT_MODEL,
+                    }));
 
-            modelCache.data = models;
-            modelCache.lastFetched = now;
+                const models = fetchedModels.some((model) => model.id === DEFAULT_MODEL)
+                    ? fetchedModels
+                    : [createDefaultModel(), ...fetchedModels];
 
-            return models;
-        } catch (error) {
-            console.error('Error fetching models:', error);
-            // Return cached data if available, even if expired
-            if (modelCache.data.length > 0) {
-                return modelCache.data;
+                modelCache.data = models;
+                modelCache.lastFetched = Date.now();
+
+                return models;
+            } catch (error) {
+                console.error('Error fetching models:', error);
+                // Return cached data if available, even if expired
+                if (modelCache.data.length > 0) {
+                    return modelCache.data;
+                }
+                throw error;
+            } finally {
+                modelCache.isLoading = false;
+                modelFetchPromise = null;
             }
-            throw error;
-        } finally {
-            modelCache.isLoading = false;
-        }
+        })();
+
+        return modelFetchPromise;
     }
 
-    async refreshModelsCache() {
+    async refreshModelsCache(): Promise<AIModel[]> {
         modelCache.data = [];
         modelCache.lastFetched = null;
         return this.getAvailableModels();
+    }
+
+    // Method for testing - clears the module-level cache
+    clearCache(): void {
+        modelCache.data = [];
+        modelCache.lastFetched = null;
+        modelCache.isLoading = false;
     }
 
     async analyzeResume(
         text: string, 
         jobDescription: string, 
         selectedModel?: string,
-        modelParameters?: {
-            temperature?: number;
-            max_tokens?: number;
-            include_reasoning?: boolean;
-        }
-    ) {
+        modelParameters?: ModelParameters
+    ): Promise<AnalysisResult> {
         const model = selectedModel || DEFAULT_MODEL;
 
         // Pre-analyze formatting issues
@@ -266,7 +313,7 @@ Be thorough but concise. Provide specific examples and actionable advice based o
 
         try {
             // Build completion parameters with defaults and user overrides
-            const completionParams: any = {
+            const completionParams: CompletionParameters = {
                 model: model,
                 messages: [
                     {
@@ -284,9 +331,9 @@ Be thorough but concise. Provide specific examples and actionable advice based o
                 completionParams.reasoning_effort = 'medium'; // Can be 'low', 'medium', or 'high'
             }
 
-            const completion = await openai.chat.completions.create(completionParams);
+            const completion = await getOpenAIClient().chat.completions.create(completionParams as any);
 
-            const response = completion.choices[0]?.message?.content;
+            const response = (completion as OpenAICompletion).choices[0]?.message?.content;
             if (!response) {
                 throw new Error('No response from AI model');
             }
@@ -300,10 +347,11 @@ Be thorough but concise. Provide specific examples and actionable advice based o
             }
 
             // Parse the JSON response
-            const analysisResult = JSON.parse(jsonString);
+            const analysisResult = JSON.parse(jsonString) as AnalysisResult;
 
             // Ensure the response has the expected structure
-            if (!analysisResult.overallScore || !analysisResult.skillsAnalysis || !analysisResult.formattingScore) {
+            // Note: Use == null to catch both null and undefined, since overallScore of 0 is valid
+            if (analysisResult.overallScore == null || !analysisResult.skillsAnalysis || !analysisResult.formattingScore) {
                 throw new Error('Invalid response format from AI model');
             }
 
@@ -311,11 +359,23 @@ Be thorough but concise. Provide specific examples and actionable advice based o
 
         } catch (error) {
             console.error('AI Analysis error:', error);
+            const status = typeof error === 'object' && error !== null && 'status' in error
+                ? Number((error as { status?: number }).status)
+                : undefined;
+
+            if (status === 401 || status === 403) {
+                throw new Error('AI provider authentication failed. Check OPENROUTER_API_KEY or OPENAI_API_KEY and provider access.');
+            }
+
+            if (status === 429) {
+                throw new Error('AI provider rate limit reached. Please retry shortly.');
+            }
+
             throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
-    async checkHealth() {
+    async checkHealth(): Promise<HealthCheckResponse> {
         try {
             // Test OpenRouter API connectivity
             const response = await axios.get('https://openrouter.ai/api/v1/models');

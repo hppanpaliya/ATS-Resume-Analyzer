@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = env("DATABASE_PROVIDER") != "" ? env("DATABASE_PROVIDER") : "sqlite"
-  url      = env("DATABASE_URL") != "" ? env("DATABASE_URL") : "file:./dev.db"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ========================================
@@ -14,7 +14,7 @@ datasource db {
 // ========================================
 
 model User {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
 
   // Authentication
   email                 String    @unique
@@ -53,6 +53,7 @@ model User {
   jobDescriptions       JobDescription[]
   analyses              Analysis[]
   aiUsage               AiUsage[]
+  refreshSessions       RefreshSession[]
   subscription          Subscription?
   auditLogs             AuditLog[]
 
@@ -60,7 +61,7 @@ model User {
 }
 
 model Resume {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   userId                String
 
   // Resume Info
@@ -112,11 +113,12 @@ model Resume {
   versions              ResumeVersion[]
   analyses              Analysis[]
 
+  @@index([userId, deletedAt, updatedAt])
   @@map("resumes")
 }
 
 model ResumeVersion {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   resumeId              String
 
   // Version Info
@@ -147,11 +149,12 @@ model ResumeVersion {
   resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([resumeId, versionNumber])
+  @@index([resumeId, createdAt])
   @@map("resume_versions")
 }
 
 model Template {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
 
   // Template Info
   name                  String    @unique
@@ -186,7 +189,7 @@ model Template {
 }
 
 model JobDescription {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   userId                String
 
   // Job Info
@@ -211,11 +214,12 @@ model JobDescription {
   analyses              Analysis[]
   optimizedResumes      Resume[]  @relation("optimizedFor")
 
+  @@index([userId, deletedAt, updatedAt])
   @@map("job_descriptions")
 }
 
 model Analysis {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   userId                String
   resumeId              String
   jobDescriptionId      String?
@@ -248,6 +252,8 @@ model Analysis {
   resume                Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   jobDescription        JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
+  @@index([userId, createdAt])
+  @@index([resumeId])
   @@map("analyses")
 }
 
@@ -282,8 +288,25 @@ model AiUsage {
   @@map("ai_usage")
 }
 
+model RefreshSession {
+  id                    String    @id @default(uuid())
+  userId                String
+  tokenHash             String    @unique
+  expiresAt             DateTime
+  revokedAt             DateTime?
+  replacedBySessionId   String?
+  createdAt             DateTime  @default(now())
+  lastUsedAt            DateTime?
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("refresh_sessions")
+}
+
 model Subscription {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   userId                String    @unique
 
   // Subscription Info
@@ -314,7 +337,7 @@ model Subscription {
 }
 
 model AuditLog {
-  id                    String    @id @default(uuid()) @map("_id")
+  id                    String    @id @default(uuid())
   userId                String?
 
   // Action Info

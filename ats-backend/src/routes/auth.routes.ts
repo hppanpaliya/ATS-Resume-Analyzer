@@ -1,10 +1,49 @@
 import { Router, Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth.service';
 import { AuthRequest, authMiddleware } from '../middleware/auth.middleware';
+import { sanitizeEmail, sanitizeString } from '../utils/sanitizer';
+import prisma from '../lib/prisma';
+import { AppError } from '../utils/errors';
+import { Logger } from '../utils/logger';
 
-const router = Router();
+const router: Router = Router();
 const authService = new AuthService();
+
+const authServiceUnavailable = 'Authentication service is temporarily unavailable. Please verify database setup and try again.';
+const authErrorStatuses: Record<string, number> = {
+  'User already exists': 409,
+  'Invalid credentials': 401,
+  'Invalid refresh token': 401,
+};
+
+const isPrismaInfrastructureError = (error: unknown) => (
+  error instanceof Prisma.PrismaClientInitializationError ||
+  error instanceof Prisma.PrismaClientRustPanicError ||
+  (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    ['P1001', 'P1008', 'P2021', 'P2022'].includes(error.code)
+  )
+);
+
+const sendAuthError = (res: Response, error: unknown, fallbackMessage: string) => {
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({ error: error.message });
+  }
+
+  if (error instanceof Error && authErrorStatuses[error.message]) {
+    return res.status(authErrorStatuses[error.message]).json({ error: error.message });
+  }
+
+  if (isPrismaInfrastructureError(error)) {
+    Logger.error(`${fallbackMessage}: infrastructure failure`, error instanceof Error ? error : undefined);
+    return res.status(503).json({ error: authServiceUnavailable });
+  }
+
+  Logger.error(fallbackMessage, error instanceof Error ? error : undefined);
+  return res.status(500).json({ error: fallbackMessage });
+};
 
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
@@ -19,9 +58,12 @@ router.post('/register', [
       return res.status(400).json({ error: 'Invalid input', details: errors.array() });
     }
 
-    const { email, password, firstName, lastName } = req.body;
+    const email = sanitizeEmail(req.body.email);
+    const password = req.body.password; // Don't sanitize passwords
+    const firstName = sanitizeString(req.body.firstName);
+    const lastName = sanitizeString(req.body.lastName);
 
-    const result = await authService.register(email, password, firstName, lastName);
+    const result = await authService.register(email, password, firstName || undefined, lastName || undefined);
 
     res.status(201).json({
       success: true,
@@ -31,6 +73,8 @@ router.post('/register', [
           email: result.user.email,
           firstName: result.user.firstName,
           lastName: result.user.lastName,
+          subscriptionTier: result.user.subscriptionTier,
+          emailVerified: result.user.emailVerified,
         },
         tokens: {
           accessToken: result.accessToken,
@@ -39,7 +83,7 @@ router.post('/register', [
       },
     });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    return sendAuthError(res, error, 'Registration failed. Please try again later.');
   }
 });
 
@@ -54,7 +98,8 @@ router.post('/login', [
       return res.status(400).json({ error: 'Invalid input', details: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const email = sanitizeEmail(req.body.email);
+    const password = req.body.password; // Don't sanitize passwords
 
     const result = await authService.login(email, password);
 
@@ -66,6 +111,8 @@ router.post('/login', [
           email: result.user.email,
           firstName: result.user.firstName,
           lastName: result.user.lastName,
+          subscriptionTier: result.user.subscriptionTier,
+          emailVerified: result.user.emailVerified,
         },
         tokens: {
           accessToken: result.accessToken,
@@ -74,7 +121,7 @@ router.post('/login', [
       },
     });
   } catch (error: any) {
-    res.status(401).json({ error: error.message });
+    return sendAuthError(res, error, 'Login failed. Please try again later.');
   }
 });
 
@@ -102,7 +149,7 @@ router.post('/refresh', [
       },
     });
   } catch (error: any) {
-    res.status(401).json({ error: error.message });
+    return sendAuthError(res, error, 'Refresh failed. Please try again later.');
   }
 });
 
@@ -111,10 +158,6 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
     if (!req.userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
-
-    // Get user from database
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
 
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
@@ -138,7 +181,27 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
       data: { user },
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error' });
+    return sendAuthError(res, error, 'Internal server error');
+  }
+});
+
+router.post('/logout', [
+  body('refreshToken').optional().isLength({ min: 1 }),
+], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Invalid input', details: errors.array() });
+    }
+
+    const { refreshToken } = req.body;
+    if (typeof refreshToken === 'string' && refreshToken.length > 0) {
+      await authService.revokeRefreshSession(refreshToken);
+    }
+
+    res.json({ success: true, message: 'Logged out' });
+  } catch (_error: any) {
+    return sendAuthError(res, _error, 'Logout failed');
   }
 });
 

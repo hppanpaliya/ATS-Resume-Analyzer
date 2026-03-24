@@ -1,6 +1,6 @@
-import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { FileStorageService, FileMetadata } from './file-storage.service';
+import { extractTextFromStructuredData as sharedExtractText } from '../utils/resume-text-extractor';
 
 export interface ProcessedResume {
   text: string;
@@ -23,13 +23,15 @@ export class ResumeFileService {
   constructor(private fileStorage: FileStorageService) {}
 
   async processResumeFile(file: Express.Multer.File, userId: string): Promise<ResumeFileData> {
-    console.log('Processing resume file:', { userId, filename: file.originalname, size: file.size });
-    // Save the original file
-    const fileMetadata = await this.fileStorage.saveFile(file, userId);
-    console.log('File saved with metadata:', fileMetadata);
-
     // Extract text based on file type
-    const processedContent = await this.extractTextFromFile(file, fileMetadata);
+    const processedContent = await this.extractTextFromFile(file);
+
+    if (!processedContent.text || processedContent.text.trim().length < 30) {
+      throw new Error('Unable to extract readable text from file');
+    }
+
+    // Save the original file only after successful extraction
+    const fileMetadata = await this.fileStorage.saveFile(file, userId);
 
     return {
       originalFile: fileMetadata,
@@ -38,18 +40,16 @@ export class ResumeFileService {
     };
   }
 
-  private async extractTextFromFile(
-    file: Express.Multer.File,
-    metadata: FileMetadata
-  ): Promise<ProcessedResume> {
+  private async extractTextFromFile(file: Express.Multer.File): Promise<ProcessedResume> {
     const buffer = file.buffer;
     let text = '';
     let structuredData: any = null;
     let pageCount: number | undefined;
 
     try {
-      switch (metadata.mimeType) {
+      switch (file.mimetype) {
         case 'application/pdf':
+          const { PDFParse } = await import('pdf-parse');
           const parser = new PDFParse({ data: buffer });
           const pdfData = await parser.getText();
           text = pdfData.text;
@@ -68,9 +68,7 @@ export class ResumeFileService {
           break;
 
         default:
-          // Try to extract as plain text
-          text = buffer.toString('utf-8');
-          break;
+          throw new Error('Unsupported file type for text extraction');
       }
 
       // Try to parse as JSON for structured data (future template system)
@@ -84,9 +82,8 @@ export class ResumeFileService {
         // Not JSON, continue with extracted text
       }
 
-    } catch (error) {
-      console.error('Error extracting text from file:', error);
-      text = 'Error extracting text from file';
+    } catch (_error) {
+      throw new Error('Failed to extract text from file');
     }
 
     const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
@@ -105,43 +102,7 @@ export class ResumeFileService {
   }
 
   private extractTextFromStructuredData(data: any): string {
-    // Extract readable text from structured resume data
-    const sections: string[] = [];
-
-    if (data.personalInfo) {
-      const { fullName, email, phone, location } = data.personalInfo;
-      sections.push(`${fullName || 'Name'}`);
-      if (email) sections.push(`Email: ${email}`);
-      if (phone) sections.push(`Phone: ${phone}`);
-      if (location) sections.push(`Location: ${location}`);
-    }
-
-    if (data.summary) {
-      sections.push(`SUMMARY\n${data.summary}`);
-    }
-
-    if (data.experience && Array.isArray(data.experience)) {
-      sections.push('EXPERIENCE');
-      data.experience.forEach((exp: any) => {
-        sections.push(`${exp.position || 'Position'} at ${exp.company || 'Company'}`);
-        sections.push(`${exp.startDate || 'Start'} - ${exp.endDate || 'Present'}`);
-        if (exp.description) sections.push(exp.description);
-      });
-    }
-
-    if (data.education && Array.isArray(data.education)) {
-      sections.push('EDUCATION');
-      data.education.forEach((edu: any) => {
-        sections.push(`${edu.degree || 'Degree'} from ${edu.school || 'School'}`);
-        if (edu.graduationDate) sections.push(`Graduated: ${edu.graduationDate}`);
-      });
-    }
-
-    if (data.skills && Array.isArray(data.skills)) {
-      sections.push(`SKILLS\n${data.skills.join(', ')}`);
-    }
-
-    return sections.join('\n\n');
+    return sharedExtractText(data);
   }
 
   async getResumeFile(fileId: string, userId: string): Promise<Buffer | null> {

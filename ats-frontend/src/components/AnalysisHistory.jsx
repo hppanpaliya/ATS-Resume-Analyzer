@@ -17,8 +17,8 @@ const AnalysisHistory = () => {
       setLoading(true);
       setError('');
       const response = await getAnalyses(pageNum, 10);
-      setAnalyses(response.analyses);
-      setTotalPages(response.totalPages);
+      setAnalyses(response.analyses || []);
+      setTotalPages(response.pagination?.totalPages || 1);
       setPage(pageNum);
     } catch (err) {
       setError(err.message || 'Failed to load analysis history');
@@ -49,7 +49,7 @@ const AnalysisHistory = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <LoadingSpinner />
+        <LoadingSpinner label="Loading analyses..." />
       </div>
     );
   }
@@ -84,10 +84,11 @@ const AnalysisHistory = () => {
       ) : (
         <div className="space-y-4">
           {analyses.map((analysis) => (
-            <div
+            <button
               key={analysis.id}
-              className="glass-strong rounded-2xl p-6 hover-glass transition-all duration-300 cursor-pointer"
+              className="w-full text-left glass-strong rounded-2xl p-6 hover-glass transition-all duration-300 cursor-pointer"
               onClick={() => handleViewAnalysis(analysis.id)}
+              type="button"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -123,7 +124,7 @@ const AnalysisHistory = () => {
                   </svg>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}

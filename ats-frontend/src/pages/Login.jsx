@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
 import { authService } from '../services/authService';
 
@@ -10,7 +10,19 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasSessionToken = useAuthStore((state) => Boolean(state.accessToken || state.refreshToken));
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectTarget = location.state?.from?.pathname || location.state?.from || '/dashboard';
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && hasSessionToken) {
+      navigate(redirectTarget, { replace: true });
+    }
+  }, [hasHydrated, isAuthenticated, hasSessionToken, navigate, redirectTarget]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +32,7 @@ const Login = () => {
     try {
       const data = await authService.login(email, password);
       setAuth(data.user, data.tokens.accessToken, data.tokens.refreshToken);
-      navigate('/dashboard');
+      navigate(redirectTarget, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed');
@@ -37,18 +49,24 @@ const Login = () => {
         </h1>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4">
+          <div
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4"
+            role="alert"
+            aria-live="polite"
+          >
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
               type="email"
+              id="login-email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
@@ -59,11 +77,13 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
               type="password"
+              id="login-password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
@@ -84,7 +104,7 @@ const Login = () => {
 
         <p className="mt-6 text-center text-gray-700 dark:text-gray-300">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-purple-600 dark:text-purple-400 font-semibold">
+          <Link to="/signup" state={{ from: redirectTarget }} className="text-purple-600 dark:text-purple-400 font-semibold">
             Sign up
           </Link>
         </p>

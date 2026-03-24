@@ -1,8 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
+import { safeJsonParse } from '../lib/json';
 
 export class TemplateService {
+  private parseTemplateJson(value: string | null) {
+    return safeJsonParse<Record<string, any> | null>(value, null);
+  }
+
   async getTemplates(category?: string, includeInactive = false) {
     const where: any = {};
     if (category) {
@@ -20,8 +23,8 @@ export class TemplateService {
     // Parse structure and defaultData for each template
     return templates.map(template => ({
       ...template,
-      structure: template.structure ? JSON.parse(template.structure) : null,
-      defaultData: template.defaultData ? JSON.parse(template.defaultData) : null,
+      structure: this.parseTemplateJson(template.structure),
+      defaultData: this.parseTemplateJson(template.defaultData),
     }));
   }
 
@@ -36,8 +39,8 @@ export class TemplateService {
 
     return {
       ...template,
-      structure: template.structure ? JSON.parse(template.structure) : null,
-      defaultData: template.defaultData ? JSON.parse(template.defaultData) : null,
+      structure: this.parseTemplateJson(template.structure),
+      defaultData: this.parseTemplateJson(template.defaultData),
     };
   }
 
@@ -68,8 +71,8 @@ export class TemplateService {
 
     return {
       ...template,
-      structure: template.structure ? JSON.parse(template.structure) : null,
-      defaultData: template.defaultData ? JSON.parse(template.defaultData) : null,
+      structure: this.parseTemplateJson(template.structure),
+      defaultData: this.parseTemplateJson(template.defaultData),
     };
   }
 
@@ -102,8 +105,8 @@ export class TemplateService {
 
     return {
       ...template,
-      structure: template.structure ? JSON.parse(template.structure) : null,
-      defaultData: template.defaultData ? JSON.parse(template.defaultData) : null,
+      structure: this.parseTemplateJson(template.structure),
+      defaultData: this.parseTemplateJson(template.defaultData),
     };
   }
 

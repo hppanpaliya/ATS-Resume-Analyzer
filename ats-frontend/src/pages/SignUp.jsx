@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
 import { authService } from '../services/authService';
 
@@ -15,7 +15,19 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasSessionToken = useAuthStore((state) => Boolean(state.accessToken || state.refreshToken));
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectTarget = location.state?.from?.pathname || location.state?.from || '/dashboard';
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && hasSessionToken) {
+      navigate(redirectTarget, { replace: true });
+    }
+  }, [hasHydrated, isAuthenticated, hasSessionToken, navigate, redirectTarget]);
 
   const handleChange = (e) => {
     setFormData({
@@ -51,7 +63,7 @@ const SignUp = () => {
         formData.lastName
       );
       setAuth(data.user, data.tokens.accessToken, data.tokens.refreshToken);
-      navigate('/dashboard');
+      navigate(redirectTarget, { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -67,7 +79,11 @@ const SignUp = () => {
         </h1>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4">
+          <div
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4"
+            role="alert"
+            aria-live="polite"
+          >
             {error}
           </div>
         )}
@@ -75,76 +91,86 @@ const SignUp = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+              <label htmlFor="signup-first-name" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
                 First Name
               </label>
               <input
                 type="text"
+                id="signup-first-name"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
                 placeholder="John"
+                autoComplete="given-name"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+              <label htmlFor="signup-last-name" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
                 Last Name
               </label>
               <input
                 type="text"
+                id="signup-last-name"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
                 placeholder="Doe"
+                autoComplete="family-name"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+            <label htmlFor="signup-email" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
               type="email"
+              id="signup-email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
               placeholder="you@example.com"
+              autoComplete="email"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+            <label htmlFor="signup-password" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
               type="password"
+              id="signup-password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
               placeholder="••••••••"
+              autoComplete="new-password"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
+            <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-gray-800 dark:text-gray-300 mb-2">
               Confirm Password
             </label>
             <input
               type="password"
+              id="signup-confirm-password"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-4 py-3 glass rounded-xl border border-white/20 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
               placeholder="••••••••"
+              autoComplete="new-password"
               required
             />
           </div>
@@ -160,7 +186,7 @@ const SignUp = () => {
 
         <p className="mt-6 text-center text-gray-700 dark:text-gray-300">
           Already have an account?{' '}
-          <Link to="/login" className="text-purple-600 dark:text-purple-400 font-semibold">
+          <Link to="/login" state={{ from: redirectTarget }} className="text-purple-600 dark:text-purple-400 font-semibold">
             Sign in
           </Link>
         </p>

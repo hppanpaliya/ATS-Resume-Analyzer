@@ -57,8 +57,21 @@ const JobDescriptionManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.description.trim()) {
+    const normalizedTitle = formData.title.trim();
+    const normalizedDescription = formData.description.trim();
+
+    if (!normalizedTitle || !normalizedDescription) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (normalizedTitle.length < 2 || normalizedTitle.length > 200) {
+      setError('Job title must be between 2 and 200 characters');
+      return;
+    }
+
+    if (normalizedDescription.length < 30 || normalizedDescription.length > 20000) {
+      setError('Job description must be between 30 and 20000 characters');
       return;
     }
 
@@ -66,10 +79,16 @@ const JobDescriptionManager = () => {
       setSaving(true);
       setError('');
 
+      const payload = {
+        ...formData,
+        title: normalizedTitle,
+        description: normalizedDescription,
+      };
+
       if (editingJob) {
-        await updateJobDescription(editingJob.id, formData);
+        await updateJobDescription(editingJob.id, payload);
       } else {
-        await createJobDescription(formData);
+        await createJobDescription(payload);
       }
 
       await loadJobDescriptions();
@@ -109,7 +128,7 @@ const JobDescriptionManager = () => {
   if (loading && (!Array.isArray(jobDescriptions) || jobDescriptions.length === 0)) {
     return (
       <div className="flex items-center justify-center py-12">
-        <LoadingSpinner />
+        <LoadingSpinner label="Loading job descriptions..." />
       </div>
     );
   }
@@ -148,11 +167,12 @@ const JobDescriptionManager = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="job-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Job Title *
               </label>
               <input
                 type="text"
+                id="job-title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -162,10 +182,11 @@ const JobDescriptionManager = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Job Description *
               </label>
               <textarea
+                id="job-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={8}
@@ -227,6 +248,7 @@ const JobDescriptionManager = () => {
                     onClick={() => handleEdit(job)}
                     className="p-1 text-gray-500 hover:text-blue-500 transition-colors"
                     title="Edit"
+                    aria-label="Edit job description"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -237,6 +259,7 @@ const JobDescriptionManager = () => {
                     onClick={() => handleDelete(job.id)}
                     className="p-1 text-gray-500 hover:text-red-500 transition-colors"
                     title="Delete"
+                    aria-label="Delete job description"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

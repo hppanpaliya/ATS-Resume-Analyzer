@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { validateFile } from '../services/api';
 
 const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -14,12 +15,13 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
   }, []);
 
   const handleFile = useCallback((file) => {
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
-      onFileError('Please upload a PDF or DOCX file');
+    try {
+      validateFile(file);
+      onFileSelect(file);
+    } catch (error) {
+      onFileError(error.message);
       return;
     }
-    onFileSelect(file);
   }, [onFileError, onFileSelect]);
 
   const handleDrop = useCallback((e) => {
@@ -94,7 +96,7 @@ const FileUpload = ({ onFileSelect, onFileError, selectedFile }) => {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-            Maximum file size: 3MB
+            Maximum file size: 5MB
           </p>
         </label>
         

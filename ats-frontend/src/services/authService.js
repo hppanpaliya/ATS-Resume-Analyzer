@@ -13,14 +13,10 @@ export const authService = {
 
   async login(email, password) {
     try {
-      // console.log('[authService] Calling login API...');
       const response = await apiClient.post('/api/auth/login', {
         email,
         password,
       });
-      // console.log('[authService] Full response:', response);
-      // console.log('[authService] Response data:', response.data);
-      // console.log('[authService] Response data.data:', response.data.data);
       return response.data.data;
     } catch (error) {
       // Handle login-specific errors
@@ -35,9 +31,8 @@ export const authService = {
     }
   },
 
-  async logout() {
-    // Optional: call backend logout endpoint
-    // await apiClient.post('/api/auth/logout');
+  async logout(refreshToken) {
+    await apiClient.post('/api/auth/logout', { refreshToken });
   },
 
   async getCurrentUser() {

@@ -8,6 +8,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "axios": "^1.13.2",
+    "dompurify": "^3.3.3",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.553.0",
     "react": "^18.3.1",
@@ -21,7 +22,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:tour": "playwright test tests/e2e/tour-presentation.spec.ts -g @tour",
+    "test:tour:video": "playwright test tests/e2e/tour-presentation.spec.ts --project=chromium -g @tour-video",
+    "presentation:pptx": "node scripts/build-presentation.mjs",
+    "presentation:build": "npm run test:tour && npm run test:tour:video && npm run presentation:pptx"
   },
   "eslintConfig": {
     "extends": [
@@ -42,10 +47,17 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
     "postcss": "^8.5.6",
+    "pptxgenjs": "^4.0.1",
     "tailwindcss": "^3.4.18",
     "vite": "^7.2.2"
-  }
+  },
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
 }

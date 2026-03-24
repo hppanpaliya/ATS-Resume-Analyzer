@@ -165,9 +165,9 @@ JWT_SECRET=your-secret-key
 JWT_REFRESH_SECRET=your-refresh-secret
 
 # AI (OpenRouter)
-OPENAI_API_KEY=your-openrouter-api-key
+OPENROUTER_API_KEY=your-openrouter-api-key
 BASE_URL=https://openrouter.ai/api/v1
-ANALYSIS_MODEL=google/gemini-2.0-flash-exp:free
+ANALYSIS_MODEL=openrouter/free
 
 # Server
 PORT=3001

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { analyzeResume, testConnection } from '../services/api';
+import { analyzeResume, getAnalysisById, testConnection, waitForAnalysisCompletion } from '../services/api';
 import FileUpload from '../components/FileUpload';
 import JobDescriptionInput from '../components/JobDescriptionInput';
 import ModelSelector from '../components/ModelSelector';
 import ModelParameters from '../components/ModelParameters';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { extractJobTitle } from '../utils/jobTitle';
 
 const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, connectionStatus, setConnectionStatus, onModelSelect, onModelParametersChange }) => {
   const navigate = useNavigate();
@@ -22,8 +23,8 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await testConnection();
-        setConnectionStatus('connected');
+        const result = await testConnection();
+        setConnectionStatus(result.success ? 'connected' : 'error');
       } catch (error) {
         console.error('Connection check failed:', error);
         setConnectionStatus('error');
@@ -84,24 +85,6 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
     setAnalysisResult(null);
 
     try {
-      // Extract job title from the job description - look for common patterns
-      const extractJobTitle = (jd) => {
-        const lines = jd.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-
-        // Look for lines that might be job titles (short, title case, etc.)
-        for (const line of lines.slice(0, 5)) {
-          if (line.length > 3 && line.length < 100 &&
-              (line.includes('Engineer') || line.includes('Developer') || line.includes('Manager') ||
-               line.includes('Analyst') || line.includes('Specialist') || line.includes('Director') ||
-               line.includes('Senior') || line.includes('Lead') || line.includes('Principal'))) {
-            return line;
-          }
-        }
-
-        // Fallback to first non-empty line
-        return lines[0] || 'Untitled Position';
-      };
-
       const jobTitle = extractJobTitle(jobDescription);
       const result = await analyzeResume(
         resumeFile,
@@ -110,11 +93,25 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
         modelParameters,
         jobTitle
       );
-      setAnalysisResult(result);
+
+      let resolvedAnalysis = result;
+
+      if (result?.jobId) {
+        const completedJob = await waitForAnalysisCompletion(result.jobId);
+        const analysisId = completedJob.result?.savedAnalysisId;
+
+        if (!analysisId) {
+          throw new Error('Analysis finished without a saved result.');
+        }
+
+        resolvedAnalysis = await getAnalysisById(analysisId);
+      }
+
+      setAnalysisResult(resolvedAnalysis);
 
       // Redirect to analysis page with the result
-      navigate(`/analysis/${result.savedAnalysisId || 'new'}`, {
-        state: { analysis: result }
+      navigate(`/analysis/${resolvedAnalysis.savedAnalysisId || resolvedAnalysis.id || 'new'}`, {
+        state: { analysis: resolvedAnalysis }
       });
     } catch (err) {
       setError(err.message || 'Analysis failed. Please try again.');
@@ -157,7 +154,7 @@ const AnalysisDashboard = ({ showModelSelector, selectedModel, modelParameters, 
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
-              <LoadingSpinner />
+              <LoadingSpinner label="" />
             </div>
           ) : (
             <div className="flex items-center justify-center space-x-3">

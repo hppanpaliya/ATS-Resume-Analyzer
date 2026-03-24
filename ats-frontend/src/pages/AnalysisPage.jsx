@@ -57,7 +57,7 @@ const AnalysisPage = () => {
     return (
       <div className="min-h-screen animated-bg paper-texture flex items-center justify-center">
         <div className="text-center">
-          <LoadingSpinner />
+          <LoadingSpinner label="" />
           <p className="text-gray-700 dark:text-gray-300 mt-4">Loading analysis...</p>
         </div>
       </div>
