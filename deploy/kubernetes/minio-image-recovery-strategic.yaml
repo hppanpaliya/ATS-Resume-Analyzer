@@ -1,0 +1,17 @@
+# Strategic-merge patch for the live MinIO Deployment.
+# Apply with the command documented in README.md; do not use `kubectl apply -f`
+# because this file is a patch, not the complete Deployment manifest.
+#
+# The upstream minio/minio repository no longer permits anonymous pulls. The
+# currently-running release remains in the worker node's containerd cache.
+# IfNotPresent allows the single local-path-PVC MinIO pod to restart from that
+# cache instead of attempting the unavailable registry pull.
+spec:
+  strategy:
+    type: Recreate
+    rollingUpdate: null
+  template:
+    spec:
+      containers:
+        - name: minio
+          imagePullPolicy: IfNotPresent
